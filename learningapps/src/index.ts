@@ -20,6 +20,7 @@ import express from 'express';
 import contentRoutes from './routes/content.js';
 import modulesRoutes from './routes/modules.js';
 import h5pRoutes from './routes/h5p.js';
+import planningRoutes from './routes/planning.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -39,6 +40,7 @@ app.use((req, res, next) => {
 app.use('/api/content', contentRoutes);
 app.use('/api/modules', modulesRoutes);
 app.use('/api/h5p', h5pRoutes);
+app.use('/api/planning', planningRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
