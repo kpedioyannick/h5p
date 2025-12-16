@@ -5,9 +5,13 @@ const fs = require('fs-extra');
 
 const CONTENT_DIR = path.join(__dirname, '../content');
 
+const H5PGenerator = require('./h5pGenerator').H5PGenerator;
+const h5pGenerator = new H5PGenerator();
+
 router.get('/', async (req, res) => {
     try {
         const modulesParam = req.query.modules;
+        const format = req.query.format || 'revealjs'; // Default to revealjs
 
         if (!modulesParam || typeof modulesParam !== 'string') {
             return res.status(400).send(`
@@ -64,7 +68,30 @@ router.get('/', async (req, res) => {
             `);
         }
 
-        // Generate slides HTML
+        // Handle Interactive Book format
+        if (format === 'interactivebook') {
+            try {
+                const result = await h5pGenerator.generateInteractiveBook(validModules);
+                // Redirect to the viewer for the generated book
+                // We need to resolve the slug for Interactive Book
+                const registryPath = path.join(__dirname, '../libraryRegistry.json');
+                let slug = 'h5p-interactivebook'; // Default
+                if (fs.existsSync(registryPath)) {
+                    const registry = fs.readJsonSync(registryPath);
+                    if (registry['H5P.InteractiveBook'] && registry['H5P.InteractiveBook'].shortName) {
+                        slug = registry['H5P.InteractiveBook'].shortName;
+                    }
+                }
+
+                const h5pBaseUrl = process.env.H5P_BASE_URL || 'http://localhost:8080';
+                return res.redirect(`${h5pBaseUrl}/view/${slug}/${result.id}`);
+            } catch (err) {
+                console.error('Error generating Interactive Book:', err);
+                return res.status(500).send(`Erreur lors de la génération du livre interactif: ${err.message}`);
+            }
+        }
+
+        // Generate slides HTML (Reveal.js)
         const slidesHTML = validModules.map((module, index) => {
             let embedHTML = '';
 

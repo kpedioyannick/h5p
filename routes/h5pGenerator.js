@@ -1,36 +1,18 @@
-import fs from 'fs-extra';
-import path from 'path';
-import { fileURLToPath } from 'url';
+const fs = require('fs-extra');
+const path = require('path');
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// Configuration paths
+const H5P_CONTENT_DIR = process.env.H5P_CONTENT_PATH || path.resolve(__dirname, '../content');
+const H5P_LIBRARIES_DIR = process.env.H5P_LIBRARIES_PATH || path.resolve(__dirname, '../libraries');
 
-// Configuration paths (can be overridden by env vars)
-const H5P_CONTENT_DIR = process.env.H5P_CONTENT_PATH || path.resolve(__dirname, '../../../content');
-const H5P_LIBRARIES_DIR = process.env.H5P_LIBRARIES_PATH || path.resolve(__dirname, '../../../libraries');
-
-interface LibraryDependency {
-    machineName: string;
-    majorVersion: number;
-    minorVersion: number;
-}
-
-interface H5PContentResult {
-    path: string;
-    folder: string;
-    id: string;
-    iframeUrl: string;
-}
-
-export class H5PGenerator {
+class H5PGenerator {
 
     constructor() {
         // Ensure directories exist
         fs.ensureDirSync(H5P_CONTENT_DIR);
-        // Libraries dir should already exist and be populated
     }
 
-    private async getDependencies(machineName: string, major: number, minor: number, loadedDeps = new Set<string>()): Promise<LibraryDependency[]> {
+    async getDependencies(machineName, major, minor, loadedDeps = new Set()) {
         const depKey = `${machineName}-${major}.${minor}`;
         if (loadedDeps.has(depKey)) {
             return [];
@@ -46,7 +28,7 @@ export class H5PGenerator {
         }
 
         const libraryData = await fs.readJson(libraryJsonPath);
-        let dependencies: LibraryDependency[] = [];
+        let dependencies = [];
 
         if (libraryData.preloadedDependencies) {
             for (const dep of libraryData.preloadedDependencies) {
@@ -67,7 +49,7 @@ export class H5PGenerator {
         return dependencies;
     }
 
-    private findLibrariesInContent(obj: any, found: LibraryDependency[] = []): LibraryDependency[] {
+    findLibrariesInContent(obj, found = []) {
         if (!obj || typeof obj !== 'object') return found;
 
         if (obj.library && typeof obj.library === 'string') {
@@ -92,7 +74,7 @@ export class H5PGenerator {
         return found;
     }
 
-    public async generate(library: string, params: any): Promise<H5PContentResult> {
+    async generate(library, params) {
         if (!library || !params) {
             throw new Error('Missing library or params');
         }
@@ -118,11 +100,19 @@ export class H5PGenerator {
         await fs.writeJson(path.join(outputDir, 'content.json'), params);
 
         // 2. Calculate dependencies
-        const loadedDeps = new Set<string>();
-        let allDeps: LibraryDependency[] = [];
+        const loadedDeps = new Set();
+        let allDeps = [];
 
         // Main library deps
         console.log(`Resolving dependencies for ${mainMachineName} ${mainMajor}.${mainMinor}`);
+
+        // Add main library itself to dependencies so it appears in preloadedDependencies
+        allDeps.push({
+            machineName: mainMachineName,
+            majorVersion: mainMajor,
+            minorVersion: mainMinor
+        });
+
         const mainDeps = await this.getDependencies(mainMachineName, mainMajor, mainMinor, loadedDeps);
         allDeps = allDeps.concat(mainDeps);
 
@@ -131,14 +121,14 @@ export class H5PGenerator {
         console.log(`Found content libraries:`, contentLibs);
         for (const lib of contentLibs) {
             // Add the library itself
-            //allDeps.push(lib);
+            allDeps.push(lib);
             const subDeps = await this.getDependencies(lib.machineName, lib.majorVersion, lib.minorVersion, loadedDeps);
             allDeps = allDeps.concat(subDeps);
         }
 
         // Deduplicate
-        const uniqueDeps: LibraryDependency[] = [];
-        const seen = new Set<string>();
+        const uniqueDeps = [];
+        const seen = new Set();
         for (const dep of allDeps) {
             const key = `${dep.machineName}-${dep.majorVersion}.${dep.minorVersion}`;
             if (!seen.has(key)) {
@@ -150,19 +140,20 @@ export class H5PGenerator {
         // 3. Write h5p.json
         const h5pJson = {
             title: params.metadata?.title || "Generated Content",
-            language: "fr",
+            language: "en",
             mainLibrary: mainMachineName,
             license: "U",
-            defaultLanguage: "fr",
+            defaultLanguage: "en",
             embedTypes: ["div"],
-            preloadedDependencies: uniqueDeps
+            preloadedDependencies: uniqueDeps,
+            extraTitle: params.metadata?.title || "Generated Content"
         };
 
         await fs.writeJson(path.join(outputDir, 'h5p.json'), h5pJson);
 
         // 4. Generate Iframe URL
         // Read library registry to find shortName
-        const registryPath = path.resolve(__dirname, '../../../libraryRegistry.json');
+        const registryPath = path.resolve(__dirname, '../libraryRegistry.json');
         let shortName = mainMachineName.toLowerCase().replace('.', '-'); // Default fallback
 
         try {
@@ -185,13 +176,12 @@ export class H5PGenerator {
         console.log(`Generated content at ${outputDir}`);
         return { path: outputDir, folder: timestamp, id: timestamp, iframeUrl };
     }
-    public async generateInteractiveBook(modules: { type: string, id: string }[]): Promise<H5PContentResult> {
-        const chapters: any[] = [];
+
+    async generateInteractiveBook(modules) {
+        const chapters = [];
         const timestamp = Date.now().toString();
-        const outputDir = path.join(H5P_CONTENT_DIR, timestamp);
 
         // Supported libraries for H5P.Column (used in Interactive Book chapters)
-        // Based on H5P.Column semantics
         const supportedLibraries = [
             'H5P.Accordion', 'H5P.Agamotto', 'H5P.Audio', 'H5P.Blanks', 'H5P.Chart', 'H5P.Collage',
             'H5P.CoursePresentation', 'H5P.Dialogcards', 'H5P.DocumentationTool', 'H5P.DragQuestion',
@@ -203,7 +193,7 @@ export class H5PGenerator {
         ];
 
         for (const module of modules) {
-            let chapterContent: any = null;
+            let chapterContent = null;
             let title = `Module ${module.type} ${module.id}`;
 
             if (module.type === 'h5p') {
@@ -212,22 +202,21 @@ export class H5PGenerator {
                     if (await fs.pathExists(path.join(contentDir, 'h5p.json'))) {
                         const h5pJson = await fs.readJson(path.join(contentDir, 'h5p.json'));
                         const contentJson = await fs.readJson(path.join(contentDir, 'content.json'));
-                        const mainLib = h5pJson.mainLibrary; // e.g., "H5P.MultiChoice"
+                        const mainLib = h5pJson.mainLibrary;
 
                         title = h5pJson.title || title;
 
                         if (supportedLibraries.includes(mainLib)) {
                             // Native integration
                             chapterContent = {
-                                library: `${mainLib} ${h5pJson.preloadedDependencies.find((d: any) => d.machineName === mainLib).majorVersion}.${h5pJson.preloadedDependencies.find((d: any) => d.machineName === mainLib).minorVersion}`,
+                                library: `${mainLib} ${h5pJson.preloadedDependencies.find(d => d.machineName === mainLib).majorVersion}.${h5pJson.preloadedDependencies.find(d => d.machineName === mainLib).minorVersion}`,
                                 params: contentJson,
                                 subContentId: module.id,
                                 metadata: h5pJson.metadata || { title: title }
                             };
                         } else {
                             // Fallback to IFrameEmbed
-                            // We need to resolve the slug for the URL
-                            const registryPath = path.resolve(__dirname, '../../../libraryRegistry.json');
+                            const registryPath = path.resolve(__dirname, '../libraryRegistry.json');
                             let slug = mainLib.toLowerCase().replace('.', '-');
                             if (await fs.pathExists(registryPath)) {
                                 const registry = await fs.readJson(registryPath);
@@ -301,3 +290,5 @@ export class H5PGenerator {
         return this.generate('H5P.InteractiveBook 1.11', bookParams);
     }
 }
+
+module.exports = { H5PGenerator };
