@@ -19,6 +19,7 @@ interface H5PContentResult {
     path: string;
     folder: string;
     id: string;
+    iframeUrl: string;
 }
 
 export class H5PGenerator {
@@ -157,7 +158,29 @@ export class H5PGenerator {
 
         await fs.writeJson(path.join(outputDir, 'h5p.json'), h5pJson);
 
+        // 4. Generate Iframe URL
+        // Read library registry to find shortName
+        const registryPath = path.resolve(__dirname, '../../../libraryRegistry.json');
+        let shortName = mainMachineName.toLowerCase().replace('.', '-'); // Default fallback
+
+        try {
+            if (await fs.pathExists(registryPath)) {
+                const registry = await fs.readJson(registryPath);
+                // Registry keys are like "H5P.Blanks"
+                if (registry[mainMachineName] && registry[mainMachineName].shortName) {
+                    shortName = registry[mainMachineName].shortName;
+                }
+            } else {
+                console.warn(`Library registry not found at ${registryPath}, using fallback shortName: ${shortName}`);
+            }
+        } catch (e) {
+            console.error('Error reading library registry:', e);
+        }
+
+        const baseUrl = process.env.H5P_BASE_URL || 'http://localhost:8080';
+        const iframeUrl = `${baseUrl}/view/${shortName}/${timestamp}`;
+
         console.log(`Generated content at ${outputDir}`);
-        return { path: outputDir, folder: timestamp, id: timestamp };
+        return { path: outputDir, folder: timestamp, id: timestamp, iframeUrl };
     }
 }

@@ -78,8 +78,8 @@ router.post('/learningapps', async (req: Request, res: Response) => {
       moduleType: 'learningapps',
       module: moduleName,
       title,
-      iframeUrl: result.iframeUrl,
-      embedCode: result.iframeUrl ? generateEmbedCode(result.iframeUrl) : undefined,
+      iframeUrl: `${process.env.LEARNINGAPPS_BASE_URL || 'https://learningapps.org'}/display?v=${result.appId}`,
+      embedCode: generateEmbedCode(`${process.env.LEARNINGAPPS_BASE_URL || 'https://learningapps.org'}/display?v=${result.appId}`),
       appId: result.appId
     };
 
@@ -174,7 +174,7 @@ router.post('/learningapps/ai', async (req: Request, res: Response) => {
 
     const completion = await openaiClient.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o-mini",
       response_format: { type: "json_object" },
     });
 

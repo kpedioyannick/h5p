@@ -95,7 +95,7 @@ IMPORTANT: Return a JSON object with a "modules" array. Example:
 
         const completion = await openaiClient.chat.completions.create({
             messages: [{ role: "user", content: prompt }],
-            model: "gpt-3.5-turbo",
+            model: "gpt-4o-mini",
             response_format: { type: "json_object" },
         });
 

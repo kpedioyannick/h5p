@@ -18,6 +18,14 @@ function getOpenAI(): OpenAI | null {
 }
 
 /**
+ * Génère le code embed HTML
+ */
+function generateEmbedCode(iframeUrl: string): string {
+    const escapedUrl = iframeUrl.replace(/"/g, '&quot;');
+    return `<iframe src="${escapedUrl}" width="100%" height="600" frameborder="0" allowfullscreen></iframe>`;
+}
+
+/**
  * POST /api/h5p/generate
  * Manual H5P generation
  */
@@ -26,7 +34,11 @@ router.post('/generate', async (req: Request, res: Response) => {
         console.log('Received H5P generation request');
         const { library, params } = req.body;
         const result = await h5pGenerator.generate(library, params);
-        res.json({ success: true, ...result });
+        res.json({
+            success: true,
+            ...result,
+            embedCode: generateEmbedCode(result.iframeUrl)
+        });
     } catch (err: any) {
         console.error(err);
         res.status(500).json({ error: err.message });
@@ -70,7 +82,7 @@ router.post('/generate-ai', async (req: Request, res: Response) => {
 
         const completion = await openaiClient.chat.completions.create({
             messages: [{ role: "user", content: prompt }],
-            model: "gpt-3.5-turbo",
+            model: "gpt-4o-mini",
             response_format: { type: "json_object" },
         });
 
@@ -83,7 +95,12 @@ router.post('/generate-ai', async (req: Request, res: Response) => {
         console.log('AI generated params:', JSON.stringify(contentParams, null, 2));
 
         const result = await h5pGenerator.generate(library, contentParams);
-        res.json({ success: true, ...result, aiParams: contentParams });
+        res.json({
+            success: true,
+            ...result,
+            aiParams: contentParams,
+            embedCode: generateEmbedCode(result.iframeUrl)
+        });
 
     } catch (err: any) {
         console.error('AI Generation Error:', err);

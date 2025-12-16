@@ -42,6 +42,8 @@ app.use('/api/modules', modulesRoutes);
 app.use('/api/h5p', h5pRoutes);
 app.use('/api/planning', planningRoutes);
 
+// Route /view/:slug/:id removed (handled by external h5p server)
+
 // Health check
 app.get('/health', (req, res) => {
   res.json({

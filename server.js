@@ -10,54 +10,85 @@ const PORT = 3000;
 app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
 
+// Static files for H5P content and libraries are served by the external H5P server (port 8080)
+
+
 const LIBRARIES_DIR = path.join(__dirname, 'libraries');
 const CONTENT_DIR = path.join(__dirname, 'content');
 
-// Helper to find library folder
+// Helper to find library folder with semantic versioning
 async function findLibraryFolder(machineName, major, minor) {
-    // Try exact match first: MachineName-Major.Minor
+    // 1. Try exact match first
     const exactName = `${machineName}-${major}.${minor}`;
     const exactPath = path.join(LIBRARIES_DIR, exactName);
     if (await fs.pathExists(exactPath)) {
         return exactPath;
     }
 
-    // Try without hyphen? (Unlikely for H5P)
-    // Try finding any folder starting with MachineName-Major.Minor
-    // (Sometimes patch version is included in folder name? No, usually not in H5P standard structure here)
+    // 2. Search for compatible versions (Same Major, Minor >= requested)
+    try {
+        const files = await fs.readdir(LIBRARIES_DIR);
+        const candidates = [];
+
+        for (const file of files) {
+            if (file.startsWith(`${machineName}-${major}.`)) {
+                const parts = file.split('-');
+                const versionParts = parts[parts.length - 1].split('.');
+                const fileMajor = parseInt(versionParts[0]);
+                const fileMinor = parseInt(versionParts[1]);
+
+                if (fileMajor === major && fileMinor >= minor) {
+                    candidates.push({
+                        folder: file,
+                        minor: fileMinor,
+                        path: path.join(LIBRARIES_DIR, file)
+                    });
+                }
+            }
+        }
+
+        if (candidates.length > 0) {
+            // Sort by minor version descending to get the latest compatible
+            candidates.sort((a, b) => b.minor - a.minor);
+            console.log(`Resolved ${machineName} ${major}.${minor} to ${candidates[0].folder}`);
+            return candidates[0].path;
+        }
+    } catch (err) {
+        console.error('Error searching for libraries:', err);
+    }
+
     return null;
 }
 
-// Helper to get dependencies recursively
+// Helper to get dependencies recursively and collect assets
 async function getDependencies(machineName, major, minor, loadedDeps = new Set()) {
     const key = `${machineName}-${major}.${minor}`;
-    if (loadedDeps.has(key)) return [];
+    if (loadedDeps.has(key)) return { deps: [], scripts: [], styles: [] };
     loadedDeps.add(key);
 
     const libFolder = await findLibraryFolder(machineName, major, minor);
     if (!libFolder) {
         console.warn(`Library not found: ${key}`);
-        // If not found, we can't get its dependencies, but we should still list it if it was requested?
-        // But if we can't find it, we can't read library.json.
-        // We'll return it as a dependency anyway so it appears in h5p.json
-        return [{
-            machineName,
-            majorVersion: major,
-            minorVersion: minor
-        }];
+        return {
+            deps: [{ machineName, majorVersion: major, minorVersion: minor }],
+            scripts: [],
+            styles: []
+        };
     }
 
     const libraryJsonPath = path.join(libFolder, 'library.json');
     if (!await fs.pathExists(libraryJsonPath)) {
-        return [{
-            machineName,
-            majorVersion: major,
-            minorVersion: minor
-        }];
+        return {
+            deps: [{ machineName, majorVersion: major, minorVersion: minor }],
+            scripts: [],
+            styles: []
+        };
     }
 
     const libraryJson = await fs.readJson(libraryJsonPath);
     let deps = [];
+    let scripts = [];
+    let styles = [];
 
     // Add self
     deps.push({
@@ -66,15 +97,31 @@ async function getDependencies(machineName, major, minor, loadedDeps = new Set()
         minorVersion: libraryJson.minorVersion
     });
 
+    // Add own scripts and styles
+    const libUrlPrefix = `/libraries/${path.basename(libFolder)}`;
+
+    if (libraryJson.preloadedJs) {
+        libraryJson.preloadedJs.forEach(js => {
+            scripts.push(`${libUrlPrefix}/${js.path}`);
+        });
+    }
+    if (libraryJson.preloadedCss) {
+        libraryJson.preloadedCss.forEach(css => {
+            styles.push(`${libUrlPrefix}/${css.path}`);
+        });
+    }
+
     // Preloaded dependencies
     if (libraryJson.preloadedDependencies) {
         for (const dep of libraryJson.preloadedDependencies) {
-            const subDeps = await getDependencies(dep.machineName, dep.majorVersion, dep.minorVersion, loadedDeps);
-            deps = deps.concat(subDeps);
+            const result = await getDependencies(dep.machineName, dep.majorVersion, dep.minorVersion, loadedDeps);
+            deps = deps.concat(result.deps);
+            scripts = scripts.concat(result.scripts);
+            styles = styles.concat(result.styles);
         }
     }
 
-    return deps;
+    return { deps, scripts, styles };
 }
 
 // Recursive scanner for "library" field in content params
@@ -82,7 +129,6 @@ function findLibrariesInContent(obj, found = []) {
     if (!obj || typeof obj !== 'object') return found;
 
     if (obj.library && typeof obj.library === 'string') {
-        // Format: "H5P.MultiChoice 1.16"
         const parts = obj.library.split(' ');
         if (parts.length === 2) {
             const name = parts[0];
@@ -102,6 +148,8 @@ function findLibrariesInContent(obj, found = []) {
     }
     return found;
 }
+
+// Route /api/h5p/play/:id removed (handled by external server)
 
 const OpenAI = require('openai');
 
@@ -146,15 +194,15 @@ async function generateH5PContent(library, params) {
 
     // Main library deps
     console.log(`Resolving dependencies for ${mainMachineName} ${mainMajor}.${mainMinor}`);
-    const mainDeps = await getDependencies(mainMachineName, mainMajor, mainMinor, loadedDeps);
-    allDeps = allDeps.concat(mainDeps);
+    const mainDepsResult = await getDependencies(mainMachineName, mainMajor, mainMinor, loadedDeps);
+    allDeps = allDeps.concat(mainDepsResult.deps);
 
     // Content deps
     const contentLibs = findLibrariesInContent(params);
     console.log(`Found content libraries:`, contentLibs);
     for (const lib of contentLibs) {
-        const subDeps = await getDependencies(lib.machineName, lib.majorVersion, lib.minorVersion, loadedDeps);
-        allDeps = allDeps.concat(subDeps);
+        const subDepsResult = await getDependencies(lib.machineName, lib.majorVersion, lib.minorVersion, loadedDeps);
+        allDeps = allDeps.concat(subDepsResult.deps);
     }
 
     // Deduplicate
@@ -244,6 +292,12 @@ app.post('/api/h5p/generate-ai', async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
+// Route /content/:id removed (handled by external server)
+
+// GET /parcours - Learning path route with Reveal.js
+const parcoursRoutes = require('./routes/parcours');
+app.use('/parcours', parcoursRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);

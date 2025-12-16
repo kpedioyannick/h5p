@@ -22,6 +22,14 @@ Créez un fichier `.env` à partir de `env.example` :
 cp env.example .env
 ```
 
+Ajoutez les variables suivantes si nécessaire :
+
+```bash
+# Base URLs pour les iframes
+LEARNINGAPPS_BASE_URL=https://learningapps.org
+H5P_BASE_URL=http://localhost:8080
+```
+
 ### Lancer le serveur
 
 ```bash
@@ -96,9 +104,16 @@ Crée une nouvelle activité LearningApps en exécutant le scénario corresponda
   "title": "Mon activité",
   "iframeUrl": "https://learningapps.org/watch?v=123456",
   "embedCode": "<iframe src=\"https://learningapps.org/watch?v=123456\" width=\"100%\" height=\"600\" frameborder=\"0\" allowfullscreen></iframe>",
+  "iframeUrl": "https://learningapps.org/display?v=123456",
+  "embedCode": "<iframe src=\"https://learningapps.org/display?v=123456\" width=\"100%\" height=\"600\" frameborder=\"0\" allowfullscreen></iframe>",
   "appId": "123456"
 }
 ```
+
+#### Formats des URLs générées
+
+- **LearningApps** : `https://learningapps.org/display?v=[ID]`
+- **H5P** : `http://localhost:8080/view/[slug-librairie]/[ID]` (ex: `.../view/h5p-blanks/123456`)
 
 **Réponse en cas d'erreur :**
 ```json
