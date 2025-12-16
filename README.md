@@ -193,3 +193,36 @@ http://localhost:3000/parcours?modules=learningapps:p2i7qp7k325,h5p:176575443788
 - **H5P**: Embeds H5P content using the external server (port 8080).
 - **LearningApps**: Embeds LearningApps content using the official viewer.
 - **Mobile Friendly**: Full-screen responsive design.
+
+## GeoGebra Image Generation Service
+
+An internal service is available to generate images from GeoGebra commands using Playwright.
+
+### Usage
+
+The service is located in `geogebra/generator.js`.
+
+```javascript
+const geogebra = require('./geogebra/generator');
+
+const commands = [
+    "d1 = Line((0,0), (4,2))",
+    "d2 = Line((0,2), (4,4))",
+    "Text(\"Parallel Lines\", (1, 3))"
+];
+
+const options = {
+    hideCommandZone: true // Hides the Algebra Input/Command Zone
+};
+
+// Returns a PNG buffer
+const imageBuffer = await geogebra.generate(commands, options);
+```
+
+### Test Script
+
+A test script `test_geogebra.js` is provided to verify the service. It generates an image of two parallel lines and saves it to `content/geogebra_images/parallel_lines.png`.
+
+```bash
+node test_geogebra.js
+```

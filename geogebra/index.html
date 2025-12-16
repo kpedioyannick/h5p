@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>GeoGebra Generator</title>
+    <script src="https://www.geogebra.org/apps/deployggb.js"></script>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        #ggb-element {
+            width: 800px;
+            height: 600px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="ggb-element"></div>
+    <script>
+        var defaultParams = {
+            "appName": "classic",
+            "width": 800,
+            "height": 600,
+            "showToolBar": false,
+            "showAlgebraInput": false,
+            "showMenuBar": false,
+            "allowStyleBar": false,
+            "borderColor": "#FFFFFF",
+            "appletOnLoad": function (api) {
+                window.ggbApplet = api;
+                console.log("GeoGebra loaded");
+            }
+        };
+        // Merge default params with options injected from Playwright
+        var params = Object.assign({}, defaultParams, window.ggbOptions || {});
+        var applet = new GGBApplet(params, true);
+        window.addEventListener("load", function () {
+            applet.inject('ggb-element');
+        });
+    </script>
+</body>
+
+</html>
