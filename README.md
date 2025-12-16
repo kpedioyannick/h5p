@@ -173,3 +173,23 @@ The system currently supports generation for:
 
 ### Known Issues
 - `TextInputQuiz`, `ImagePlacement`, and `SortingPuzzle` are currently failing and require further investigation.
+
+### 5. View Learning Path (Parcours)
+
+**Endpoint**: `GET /parcours`
+
+**Query Parameters**:
+- `modules`: A comma-separated list of modules to display in the Reveal.js presentation.
+  - Format: `type:id`
+  - Types: `h5p`, `learningapps`
+
+**Example URL**:
+```
+http://localhost:3000/parcours?modules=learningapps:p2i7qp7k325,h5p:1765754437885
+```
+
+**Features**:
+- Displays modules as slides in a Reveal.js presentation.
+- **H5P**: Embeds H5P content using the external server (port 8080).
+- **LearningApps**: Embeds LearningApps content using the official viewer.
+- **Mobile Friendly**: Full-screen responsive design.
