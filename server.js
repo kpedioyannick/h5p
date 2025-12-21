@@ -299,6 +299,10 @@ app.post('/api/h5p/generate-ai', async (req, res) => {
 const parcoursRoutes = require('./routes/parcours');
 app.use('/parcours', parcoursRoutes);
 
+// POST /api/planning - Learning plan generation
+const planningRoutes = require('./routes/planning');
+app.use('/api/planning', planningRoutes);
+
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
