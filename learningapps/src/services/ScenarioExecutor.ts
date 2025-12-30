@@ -25,32 +25,32 @@ export class ScenarioExecutor {
     try {
       // Lancer le navigateur en mode headed (visible)
       this.browser = await chromium.launch({
-        headless: false,
-        slowMo: 100 // Ralentir pour voir les actions
+        headless: process.env.PLAYWRIGHT_HEADLESS === 'true' || process.env.PLAYWRIGHT_HEADLESS === undefined,
+        slowMo: process.env.PLAYWRIGHT_HEADLESS === 'true' ? 0 : 100
       });
 
-      this.page = await this.browser.newPage();
+      this.page = await this.browser.newPage({ locale: 'fr-FR' });
 
       // Charger et exécuter le scénario depuis le fichier
       const loader = new ScenarioLoader();
       const scenarioPath = loader.getScenarioPath(platform, moduleName);
-      
+
       // Convertir le chemin en URL pour l'import dynamique
       // Avec tsx, on peut importer directement des fichiers .ts
       const scenarioUrl = pathToFileURL(scenarioPath).href;
-      
+
       try {
         // Utiliser dynamic import pour charger le module TypeScript
         // tsx permet d'importer directement des fichiers .ts
         const scenarioModule = await import(scenarioUrl);
-        
+
         // Chercher la fonction exportée (peut être nommée différemment)
-        const scenarioFunction = scenarioModule.default || 
-                                 scenarioModule[`create${moduleName.charAt(0).toUpperCase() + moduleName.slice(1)}`] ||
-                                 scenarioModule[moduleName] ||
-                                 Object.values(scenarioModule).find(
-                                   (val: unknown) => typeof val === 'function'
-                                 ) as ((page: Page, params: ScenarioParams) => Promise<void>);
+        const scenarioFunction = scenarioModule.default ||
+          scenarioModule[`create${moduleName.charAt(0).toUpperCase() + moduleName.slice(1)}`] ||
+          scenarioModule[moduleName] ||
+          Object.values(scenarioModule).find(
+            (val: unknown) => typeof val === 'function'
+          ) as ((page: Page, params: ScenarioParams) => Promise<void>);
 
         if (!scenarioFunction || typeof scenarioFunction !== 'function') {
           throw new Error(
@@ -75,7 +75,7 @@ export class ScenarioExecutor {
 
       // Récupérer l'URL résultante
       const resultUrl = this.page.url();
-      
+
       // Extraire l'ID de l'app si possible (pour LearningApps)
       // L'URL peut être soit /display?v=... soit /{id}
       let appId: string | undefined;
@@ -99,7 +99,7 @@ export class ScenarioExecutor {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error('Erreur lors de l\'exécution du scénario:', errorMessage);
-      
+
       return {
         success: false,
         error: errorMessage

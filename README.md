@@ -229,3 +229,5 @@ node test_geogebra.js
 
 A FAIRE 
 https://markmap.js.org/repl
+
+J'ai terminé la préparation et le lancement du projet sur PM2. Tous les modules demandés (H5P, Cours, LearningApps, Plan et Parcours) ont été testés avec succès. Les serveurs sont en ligne sous les noms generate-h5p-app (port 3000) et h5p-learningapps (port 3001). Tu peux consulter le walkthrough pour plus de détails.

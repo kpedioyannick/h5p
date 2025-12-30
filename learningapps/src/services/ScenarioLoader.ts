@@ -22,10 +22,10 @@ export class ScenarioLoader {
       );
 
       const files = readdirSync(scenariosDir);
-      
+
       return files
-        .filter((file: string) => file.endsWith('.ts') && file !== 'EXAMPLE.ts')
-        .map((file: string) => file.replace('.ts', ''));
+        .filter((file: string) => (file.endsWith('.ts') || file.endsWith('.js')) && !file.endsWith('.d.ts') && file !== 'EXAMPLE.ts' && file !== 'EXAMPLE.js')
+        .map((file: string) => file.replace('.ts', '').replace('.js', ''));
     } catch (error) {
       console.warn(`Could not list scenarios for ${platform}:`, error);
       return [];
@@ -37,14 +37,9 @@ export class ScenarioLoader {
    */
   scenarioExists(platform: Platform, moduleName: string): boolean {
     try {
-      const scenarioPath = join(
-        __dirname,
-        '..',
-        'scenarios',
-        platform,
-        `${moduleName}.ts`
-      );
-      return existsSync(scenarioPath);
+      const tsPath = join(__dirname, '..', 'scenarios', platform, `${moduleName}.ts`);
+      const jsPath = join(__dirname, '..', 'scenarios', platform, `${moduleName}.js`);
+      return existsSync(tsPath) || existsSync(jsPath);
     } catch {
       return false;
     }
@@ -54,12 +49,8 @@ export class ScenarioLoader {
    * Obtient le chemin complet d'un scénario
    */
   getScenarioPath(platform: Platform, moduleName: string): string {
-    return join(
-      __dirname,
-      '..',
-      'scenarios',
-      platform,
-      `${moduleName}.ts`
-    );
+    const tsPath = join(__dirname, '..', 'scenarios', platform, `${moduleName}.ts`);
+    const jsPath = join(__dirname, '..', 'scenarios', platform, `${moduleName}.js`);
+    return existsSync(tsPath) ? tsPath : jsPath;
   }
 }
