@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const fs = require('fs-extra');
 const path = require('path');
+require('dotenv').config();
 
 const app = express();
 const PORT = 3000;
@@ -302,6 +303,10 @@ app.use('/parcours', parcoursRoutes);
 // POST /api/planning - Learning plan generation
 const planningRoutes = require('./routes/planning');
 app.use('/api/planning', planningRoutes);
+
+// AI Course Generation with Reveal.js
+const courseRoutes = require('./routes/course');
+app.use('/course', courseRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);

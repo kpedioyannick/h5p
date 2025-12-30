@@ -1,0 +1,17 @@
+{
+    "title": "Test Animations",
+    "slides": [
+        {
+            "content": "<h1>Slide 1</h1><div style='background: red; width: 100px; height: 100px; margin: 0 auto;' data-id='box'></div>",
+            "autoAnimate": true,
+            "autoSlide": 2000,
+            "notes": "Cette boîte va bouger."
+        },
+        {
+            "content": "<h1>Slide 2</h1><div style='background: blue; width: 200px; height: 200px; margin: 0 auto;' data-id='box'></div>",
+            "autoAnimate": true,
+            "autoSlide": 2000,
+            "notes": "La boîte est devenue bleue et plus grande."
+        }
+    ]
+}
