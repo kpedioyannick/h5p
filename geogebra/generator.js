@@ -7,7 +7,7 @@ async function init() {
     if (!browser) {
         console.log("Launching browser for GeoGebra...");
         browser = await chromium.launch({
-            headless: true,
+            headless: false,
             args: ['--no-sandbox', '--disable-setuid-sandbox'] // Often needed in containerized envs
         });
     }
