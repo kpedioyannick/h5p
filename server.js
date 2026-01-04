@@ -14,8 +14,9 @@ app.use(bodyParser.json({ limit: '50mb' }));
 // Static files for H5P content and libraries are served by the external H5P server (port 8080)
 
 
-const LIBRARIES_DIR = path.join(__dirname, 'libraries');
-const CONTENT_DIR = path.join(__dirname, 'content');
+const LIBRARIES_DIR = process.env.H5P_LIBRARIES_PATH || path.join(__dirname, 'libraries');
+const CONTENT_DIR = process.env.H5P_CONTENT_PATH || path.join(__dirname, 'content');
+console.log('CONTENT_DIR:', CONTENT_DIR);
 
 // Helper to find library folder with semantic versioning
 async function findLibraryFolder(machineName, major, minor) {
@@ -231,7 +232,26 @@ async function generateH5PContent(library, params) {
     await fs.writeJson(path.join(outputDir, 'h5p.json'), h5pJson);
 
     console.log(`Generated content at ${outputDir}`);
-    return { path: outputDir, folder: `${timestamp}`, id: `${timestamp}` };
+
+    // Generate complete URL with library slug
+    const registryPath = path.join(__dirname, 'libraryRegistry.json');
+    let slug = mainMachineName.toLowerCase().replace('.', '-'); // Default fallback
+
+    try {
+        if (await fs.pathExists(registryPath)) {
+            const registry = await fs.readJson(registryPath);
+            if (registry[mainMachineName] && registry[mainMachineName].shortName) {
+                slug = registry[mainMachineName].shortName;
+            }
+        }
+    } catch (e) {
+        console.error('Error reading library registry:', e);
+    }
+
+    const baseUrl = process.env.H5P_LINK || 'http://localhost:8080';
+    const url = `${baseUrl}/view/${slug}/${timestamp}`;
+
+    return { path: outputDir, folder: `${timestamp}`, id: `${timestamp}`, url };
 }
 
 app.post('/api/h5p/generate', async (req, res) => {

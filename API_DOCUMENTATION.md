@@ -150,3 +150,9 @@ Récupère le JSON brut d'un cours généré.
   ]
 }
 ```
+
+1. Prompt pour le plan 
+2. Génération h5p => envoie le lien globale
+2. learningapps => envoie le lien globale
+3. cours => envoie le lien globale
+4. test => parcours cours, h5p et learningapps
