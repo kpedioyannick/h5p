@@ -127,7 +127,8 @@ router.post('/learningapps/ai', async (req: Request, res: Response) => {
     Generate a JSON object for LearningApps scenario parameters for the module "${moduleName}".
     The content should be about "${topic}".
     
-    The output must be ONLY valid JSON matching the structure required by the scenario.
+    The output must be ONLY a JSON object with a 'results' key containing an array of ${count} activity parameter objects.
+    Each object must match the structure required by the scenario.
     Do not include markdown formatting or explanations.
     
     For "Qcm":
@@ -183,29 +184,45 @@ router.post('/learningapps/ai', async (req: Request, res: Response) => {
       throw new Error('No content received from OpenAI');
     }
 
-    const params = JSON.parse(content);
-    console.log('AI generated params:', JSON.stringify(params, null, 2));
+    const aiData = JSON.parse(completion.choices[0].message.content || '{}');
+    let activityParamsList = [];
 
-    // Exécuter le scénario avec les paramètres générés
-    const result = await scenarioExecutor.executeScenario('learningapps', moduleName, params);
+    if (aiData.results && Array.isArray(aiData.results)) {
+      activityParamsList = aiData.results;
+    } else {
+      activityParamsList = [aiData];
+    }
 
-    if (!result.success) {
-      return res.status(500).json({
-        success: false,
-        error: 'Content creation failed',
-        details: result.error
-      });
+    console.log(`AI generated ${activityParamsList.length} items for ${moduleName}`);
+
+    const finalResults = [];
+    for (const [index, params] of activityParamsList.entries()) {
+      console.log(`Executing scenario for item ${index + 1}/${activityParamsList.length}`);
+      try {
+        const result = await scenarioExecutor.executeScenario('learningapps', moduleName, params);
+        if (result.success) {
+          finalResults.push({
+            success: true,
+            moduleType: 'learningapps',
+            module: moduleName,
+            title: params.title || topic,
+            iframeUrl: result.iframeUrl,
+            embedCode: result.iframeUrl ? generateEmbedCode(result.iframeUrl) : undefined,
+            appId: result.appId,
+            aiParams: params
+          });
+        } else {
+          finalResults.push({ success: false, error: result.error, params });
+        }
+      } catch (err) {
+        finalResults.push({ success: false, error: String(err), params });
+      }
     }
 
     return res.json({
       success: true,
-      moduleType: 'learningapps',
-      module: moduleName,
-      title: params.title,
-      iframeUrl: result.iframeUrl,
-      embedCode: result.iframeUrl ? generateEmbedCode(result.iframeUrl) : undefined,
-      appId: result.appId,
-      aiParams: params
+      count: finalResults.length,
+      results: finalResults
     });
 
   } catch (error) {

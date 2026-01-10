@@ -1,15 +1,60 @@
 const fs = require('fs-extra');
 const path = require('path');
+const TEMPLATES = require('../config/h5pTemplates');
 
 // Configuration paths
-const H5P_CONTENT_DIR = process.env.H5P_CONTENT_PATH || path.resolve(__dirname, '../content');
-const H5P_LIBRARIES_DIR = process.env.H5P_LIBRARIES_PATH || path.resolve(__dirname, '../libraries');
+const H5P_CONTENT_DIR = process.env.H5P_CONTENT_PATH;
+const H5P_LIBRARIES_DIR = process.env.H5P_LIBRARIES_PATH;
 
 class H5PGenerator {
 
     constructor() {
         // Ensure directories exist
         fs.ensureDirSync(H5P_CONTENT_DIR);
+    }
+
+    // Helper to find library folder with semantic versioning
+    async findLibraryFolder(machineName, major, minor) {
+        // 1. Try exact match first
+        const exactName = `${machineName}-${major}.${minor}`;
+        const exactPath = path.join(H5P_LIBRARIES_DIR, exactName);
+        if (await fs.pathExists(exactPath)) {
+            return exactPath;
+        }
+
+        // 2. Search for compatible versions (Same Major, Minor >= requested)
+        try {
+            const files = await fs.readdir(H5P_LIBRARIES_DIR);
+            const candidates = [];
+
+            for (const file of files) {
+                if (file.startsWith(`${machineName}-${major}.`)) {
+                    const parts = file.split('-');
+                    const versionParts = parts[parts.length - 1].split('.');
+                    if (versionParts.length < 2) continue;
+
+                    const fileMajor = parseInt(versionParts[0]);
+                    const fileMinor = parseInt(versionParts[1]);
+
+                    if (fileMajor === major && fileMinor >= minor) {
+                        candidates.push({
+                            folder: file,
+                            minor: fileMinor,
+                            path: path.join(H5P_LIBRARIES_DIR, file)
+                        });
+                    }
+                }
+            }
+
+            if (candidates.length > 0) {
+                candidates.sort((a, b) => b.minor - a.minor);
+                return candidates[0].path;
+            }
+        } catch (err) {
+            console.error('Error searching for libraries:', err);
+        }
+
+        return null;
     }
 
     async getDependencies(machineName, major, minor, loadedDeps = new Set()) {
@@ -19,11 +64,14 @@ class H5PGenerator {
         }
         loadedDeps.add(depKey);
 
-        const libraryDir = path.join(H5P_LIBRARIES_DIR, `${machineName}-${major}.${minor}`);
-        const libraryJsonPath = path.join(libraryDir, 'library.json');
-
-        if (!await fs.pathExists(libraryJsonPath)) {
+        const libraryDir = await this.findLibraryFolder(machineName, major, minor);
+        if (!libraryDir) {
             console.warn(`Library not found: ${machineName} ${major}.${minor}`);
+            return [];
+        }
+
+        const libraryJsonPath = path.join(libraryDir, 'library.json');
+        if (!await fs.pathExists(libraryJsonPath)) {
             return [];
         }
 
@@ -53,7 +101,6 @@ class H5PGenerator {
         if (!obj || typeof obj !== 'object') return found;
 
         if (obj.library && typeof obj.library === 'string') {
-            // Format: "H5P.MultiChoice 1.16"
             const parts = obj.library.split(' ');
             if (parts.length === 2) {
                 const name = parts[0];
@@ -79,7 +126,6 @@ class H5PGenerator {
             throw new Error('Missing library or params');
         }
 
-        // Parse main library version
         let mainMachineName, mainMajor, mainMinor;
         if (library.includes(' ')) {
             const parts = library.split(' ');
@@ -95,18 +141,12 @@ class H5PGenerator {
         const outputDir = path.join(H5P_CONTENT_DIR, timestamp);
 
         await fs.ensureDir(outputDir);
-
-        // 1. Write content.json
         await fs.writeJson(path.join(outputDir, 'content.json'), params);
 
-        // 2. Calculate dependencies
         const loadedDeps = new Set();
         let allDeps = [];
 
-        // Main library deps
-        console.log(`Resolving dependencies for ${mainMachineName} ${mainMajor}.${mainMinor}`);
-
-        // Add main library itself to dependencies so it appears in preloadedDependencies
+        // Add main library itself
         allDeps.push({
             machineName: mainMachineName,
             majorVersion: mainMajor,
@@ -116,17 +156,13 @@ class H5PGenerator {
         const mainDeps = await this.getDependencies(mainMachineName, mainMajor, mainMinor, loadedDeps);
         allDeps = allDeps.concat(mainDeps);
 
-        // Content deps
         const contentLibs = this.findLibrariesInContent(params);
-        console.log(`Found content libraries:`, contentLibs);
         for (const lib of contentLibs) {
-            // Add the library itself
             allDeps.push(lib);
             const subDeps = await this.getDependencies(lib.machineName, lib.majorVersion, lib.minorVersion, loadedDeps);
             allDeps = allDeps.concat(subDeps);
         }
 
-        // Deduplicate
         const uniqueDeps = [];
         const seen = new Set();
         for (const dep of allDeps) {
@@ -137,13 +173,12 @@ class H5PGenerator {
             }
         }
 
-        // 3. Write h5p.json
         const h5pJson = {
             title: params.metadata?.title || "Generated Content",
-            language: "en",
+            language: "fr",
             mainLibrary: mainMachineName,
             license: "U",
-            defaultLanguage: "en",
+            defaultLanguage: "fr",
             embedTypes: ["div"],
             preloadedDependencies: uniqueDeps,
             extraTitle: params.metadata?.title || "Generated Content"
@@ -151,37 +186,111 @@ class H5PGenerator {
 
         await fs.writeJson(path.join(outputDir, 'h5p.json'), h5pJson);
 
-        // 4. Generate Iframe URL
-        // Read library registry to find shortName
         const registryPath = path.resolve(__dirname, '../libraryRegistry.json');
-        let shortName = mainMachineName.toLowerCase().replace('.', '-'); // Default fallback
+        let shortName = mainMachineName.toLowerCase().replace('.', '-');
 
         try {
             if (await fs.pathExists(registryPath)) {
                 const registry = await fs.readJson(registryPath);
-                // Registry keys are like "H5P.Blanks"
                 if (registry[mainMachineName] && registry[mainMachineName].shortName) {
                     shortName = registry[mainMachineName].shortName;
                 }
-            } else {
-                console.warn(`Library registry not found at ${registryPath}, using fallback shortName: ${shortName}`);
             }
         } catch (e) {
             console.error('Error reading library registry:', e);
         }
 
-        const baseUrl = process.env.H5P_BASE_URL || 'http://localhost:8080';
-        const iframeUrl = `${baseUrl}/view/${shortName}/${timestamp}`;
+        const baseUrl = process.env.H5P_LINK || process.env.H5P_BASE_URL || 'http://localhost:8080';
+        const url = `${baseUrl}/view/${shortName}/${timestamp}`;
 
-        console.log(`Generated content at ${outputDir}`);
-        return { path: outputDir, folder: timestamp, id: timestamp, iframeUrl };
+        return { path: outputDir, folder: timestamp, id: timestamp, url };
+    }
+
+    async generateAI(openai, library, topic, count = 3) {
+        if (!openai) throw new Error('OpenAI client required');
+
+        const libraryBase = library.split(' ')[0];
+        const templateConfig = TEMPLATES[libraryBase];
+
+        let prompt;
+        if (templateConfig) {
+            prompt = `You are a strict JSON template filler.
+            GOAL: Fill the JSON template below with content about "${topic}".
+            Generate ${count} distinct items in the primary array if the template allows.
+            RULES:
+            1. You MUST use the exact structure definitions below.
+            2. The Root Object MUST ONLY have keys matching the template.
+            3. Fill the values based on "${topic}".
+            4. "answers" MUST be a simple array of STRINGS ["A", "B"], NOT objects (except for MultiChoice where 'text' and 'correct' keys are used).
+            5. "correct" MUST be the integer index (0, 1, 2...).
+            6. All content MUST be in FRENCH.
+            7. Do NOT wrap the result in "settings" or "params".
+            TEMPLATE: ${JSON.stringify(templateConfig.definition)}`;
+        } else {
+            prompt = `Generate H5P content parameters (JSON) for "${library}" about "${topic}". Output ONLY valid JSON. All text in French.`;
+        }
+
+        const completion = await openai.chat.completions.create({
+            messages: [{ role: "user", content: prompt }],
+            model: "gpt-3.5-turbo",
+            response_format: { type: "json_object" },
+        });
+
+        let contentParams = JSON.parse(completion.choices[0].message.content);
+
+        // Sanitization
+        if (contentParams.aiParams) contentParams = contentParams.aiParams;
+        if (contentParams.params) contentParams = contentParams.params;
+        if (contentParams.settings) contentParams = contentParams.settings;
+        if (contentParams.content && !contentParams.questions && !contentParams.choices && !contentParams.essay) {
+            contentParams = contentParams.content;
+        }
+
+        const results = [];
+        let itemsToGenerate = [];
+        const isCollection = templateConfig && templateConfig.type === 'collection';
+
+        if (isCollection) {
+            itemsToGenerate = [contentParams];
+        } else {
+            const arrayKeys = ['questions', 'dialogs', 'cards', 'choices', 'sentences', 'paragraphs', 'text'];
+            let foundArrayKey = null;
+            for (const key of arrayKeys) {
+                if (Array.isArray(contentParams[key])) {
+                    foundArrayKey = key;
+                    break;
+                }
+            }
+
+            if (foundArrayKey) {
+                itemsToGenerate = contentParams[foundArrayKey].map(item => ({ [foundArrayKey]: [item] }));
+            } else if (contentParams.essay) {
+                itemsToGenerate = [{ essay: contentParams.essay }];
+            } else {
+                itemsToGenerate = [contentParams];
+            }
+        }
+
+        for (const itemParams of itemsToGenerate) {
+            let finalParams = itemParams;
+            if (templateConfig && templateConfig.mapping) {
+                try {
+                    finalParams = templateConfig.customMapping ?
+                        templateConfig.customMapping(itemParams) :
+                        templateConfig.mapping(itemParams);
+                } catch (e) {
+                    console.error('Mapping error:', e);
+                }
+            }
+            const result = await this.generate(library, finalParams);
+            results.push(result);
+        }
+
+        return { success: true, count: results.length, results, url: results[0]?.url };
     }
 
     async generateInteractiveBook(modules) {
         const chapters = [];
-        const timestamp = Date.now().toString();
-
-        // Supported libraries for H5P.Column (used in Interactive Book chapters)
         const supportedLibraries = [
             'H5P.Accordion', 'H5P.Agamotto', 'H5P.Audio', 'H5P.Blanks', 'H5P.Chart', 'H5P.Collage',
             'H5P.CoursePresentation', 'H5P.Dialogcards', 'H5P.DocumentationTool', 'H5P.DragQuestion',
@@ -203,39 +312,19 @@ class H5PGenerator {
                         const h5pJson = await fs.readJson(path.join(contentDir, 'h5p.json'));
                         const contentJson = await fs.readJson(path.join(contentDir, 'content.json'));
                         const mainLib = h5pJson.mainLibrary;
-
                         title = h5pJson.title || title;
 
                         if (supportedLibraries.includes(mainLib)) {
-                            // Native integration
                             chapterContent = {
                                 library: `${mainLib} ${h5pJson.preloadedDependencies.find(d => d.machineName === mainLib).majorVersion}.${h5pJson.preloadedDependencies.find(d => d.machineName === mainLib).minorVersion}`,
                                 params: contentJson,
-                                subContentId: module.id,
                                 metadata: h5pJson.metadata || { title: title }
                             };
                         } else {
-                            // Fallback to IFrameEmbed
-                            const registryPath = path.resolve(__dirname, '../libraryRegistry.json');
-                            let slug = mainLib.toLowerCase().replace('.', '-');
-                            if (await fs.pathExists(registryPath)) {
-                                const registry = await fs.readJson(registryPath);
-                                if (registry[mainLib] && registry[mainLib].shortName) {
-                                    slug = registry[mainLib].shortName;
-                                }
-                            }
-                            const baseUrl = process.env.H5P_BASE_URL || 'http://localhost:8080';
-                            const iframeUrl = `${baseUrl}/view/${slug}/${module.id}`;
-
+                            const baseUrl = process.env.H5P_LINK || process.env.H5P_BASE_URL || 'http://localhost:8080';
                             chapterContent = {
                                 library: 'H5P.IFrameEmbed 1.0',
-                                params: {
-                                    src: iframeUrl,
-                                    width: "100%",
-                                    height: "600px",
-                                    resizeSupported: false
-                                },
-                                subContentId: `iframe-${module.id}`,
+                                params: { src: `${baseUrl}/view/unknown/${module.id}`, width: "100%", height: "800px", resizeSupported: false },
                                 metadata: { title: title }
                             };
                         }
@@ -244,49 +333,37 @@ class H5PGenerator {
                     console.error(`Error processing H5P module ${module.id}:`, e);
                 }
             } else if (module.type === 'learningapps') {
-                // LearningApps -> IFrameEmbed
-                const learningAppsUrl = `https://learningapps.org/watch?v=${module.id}`;
                 chapterContent = {
                     library: 'H5P.IFrameEmbed 1.0',
-                    params: {
-                        src: learningAppsUrl,
-                        width: "100%",
-                        height: "600px",
-                        resizeSupported: false
-                    },
-                    subContentId: `la-${module.id}`,
-                    metadata: { title: `LearningApps ${module.id}` }
+                    params: { src: `https://learningapps.org/watch?v=${module.id}`, width: "100%", height: "800px", resizeSupported: false },
+                    metadata: { title: `LearningApps: ${module.id}` }
+                };
+            } else if (module.type === 'revealjs') {
+                const revealUrl = module.id.startsWith('http') ? module.id : `/revealjs/${module.id}`;
+                chapterContent = {
+                    library: 'H5P.IFrameEmbed 1.0',
+                    params: { src: revealUrl, width: "100%", height: "800px", resizeSupported: false },
+                    metadata: { title: `Présentation: ${module.id}` }
                 };
             }
 
             if (chapterContent) {
                 chapters.push({
-                    chapter: {
-                        library: 'H5P.Column 1.18',
-                        params: {
-                            content: [{
-                                content: chapterContent,
-                                useSeparator: 'auto'
-                            }]
-                        },
-                        subContentId: `chapter-${chapters.length}`,
-                        metadata: { title: title }
-                    }
+                    library: 'H5P.Column 1.18',
+                    params: {
+                        content: [{
+                            content: chapterContent,
+                            useSeparator: 'auto',
+                            subContentId: `col-item-${module.id}`.replace(/[^a-z0-9]/gi, '-')
+                        }]
+                    },
+                    subContentId: `chapter-${module.id}`.replace(/[^a-z0-9]/gi, '-'),
+                    metadata: { title: title }
                 });
             }
         }
 
-        // Construct Interactive Book content
-        const bookParams = {
-            chapters: chapters,
-            behaviour: {
-                defaultTableOfContents: true,
-                progressIndicators: true,
-                displaySummary: true
-            }
-        };
-
-        // Generate the book
+        const bookParams = { chapters, behaviour: { defaultTableOfContents: true, progressIndicators: true, displaySummary: true } };
         return this.generate('H5P.InteractiveBook 1.11', bookParams);
     }
 }
