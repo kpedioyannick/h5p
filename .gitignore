@@ -24,9 +24,11 @@ Thumbs.db
 logs/
 *.log
 
-# H5P content (generated)
-content/*/
+# H5P and Course content (generated)
+content/*
+courses/*
 !content/.gitkeep
+!courses/.gitkeep
 
 # Temporary files
 tmp/

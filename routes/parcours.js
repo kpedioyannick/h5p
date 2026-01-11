@@ -12,6 +12,7 @@ router.get('/', async (req, res) => {
     try {
         const modulesParam = req.query.modules;
         const format = req.query.format || 'revealjs'; // Default to revealjs
+        const resFormat = req.query.res || 'html'; // 'html' or 'json'
 
         if (!modulesParam || typeof modulesParam !== 'string') {
             return res.status(400).send(`
@@ -43,7 +44,7 @@ router.get('/', async (req, res) => {
 
         // Validate modules
         const validModules = modulesList.filter(m =>
-            m.type && m.id && (m.type === 'h5p' || m.type === 'learningapps')
+            m.type && m.id && (m.type === 'h5p' || m.type === 'learningapps' || m.type === 'course' || m.type === 'revealjs')
         );
 
         if (validModules.length === 0) {
@@ -71,7 +72,8 @@ router.get('/', async (req, res) => {
         // Handle Interactive Book format
         if (format === 'interactivebook') {
             try {
-                const result = await h5pGenerator.generateInteractiveBook(validModules);
+                const baseUrl = `${req.protocol}://${req.get('host')}`;
+                const result = await h5pGenerator.generateInteractiveBook(validModules, baseUrl);
                 // Redirect to the viewer for the generated book
                 // We need to resolve the slug for Interactive Book
                 const registryPath = path.join(__dirname, '../libraryRegistry.json');
@@ -83,10 +85,20 @@ router.get('/', async (req, res) => {
                     }
                 }
 
-                const h5pBaseUrl = process.env.H5P_BASE_URL || 'http://localhost:8080';
+                if (resFormat === 'json') {
+                    return res.json({
+                        success: true,
+                        id: result.id,
+                        url: `${h5pBaseUrl}/view/${slug}/${result.id}`,
+                        type: 'interactivebook'
+                    });
+                }
                 return res.redirect(`${h5pBaseUrl}/view/${slug}/${result.id}`);
             } catch (err) {
                 console.error('Error generating Interactive Book:', err);
+                if (resFormat === 'json') {
+                    return res.status(500).json({ error: `Erreur lors de la génération du livre interactif: ${err.message}` });
+                }
                 return res.status(500).send(`Erreur lors de la génération du livre interactif: ${err.message}`);
             }
         }
@@ -141,6 +153,18 @@ router.get('/', async (req, res) => {
                                 frameborder="0" 
                                 allowfullscreen
                                 class="learningapps-iframe">
+                        </iframe>
+                    </div>
+                `;
+            } else if (module.type === 'course' || module.type === 'revealjs') {
+                // Course/RevealJS module - embed using course viewer URL
+                const courseUrl = `/course/view/${module.id}`;
+                embedHTML = `
+                    <div class="module-container">
+                        <iframe src="${courseUrl}" 
+                                frameborder="0" 
+                                allowfullscreen
+                                class="course-iframe">
                         </iframe>
                     </div>
                 `;
@@ -253,6 +277,15 @@ router.get('/', async (req, res) => {
 </body>
 </html>
         `;
+
+        if (resFormat === 'json') {
+            return res.json({
+                success: true,
+                modules: validModules,
+                html: html,
+                format: 'revealjs'
+            });
+        }
 
         res.send(html);
 

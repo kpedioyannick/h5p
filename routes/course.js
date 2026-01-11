@@ -79,7 +79,7 @@ router.post('/generate', async (req, res) => {
             success: true,
             courseId,
             title: courseData.title,
-            url: `/course/view/${courseId}`
+            url: `${req.protocol}://${req.get('host')}/course/view/${courseId}`
         });
 
     } catch (err) {

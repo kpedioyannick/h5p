@@ -24,10 +24,12 @@ if (process.env.OPENAI_API_KEY) {
 const parcoursRoutes = require('./routes/parcours');
 const planningRoutes = require('./routes/planning');
 const courseRoutes = require('./routes/course');
+const batchRoutes = require('./routes/batch');
 
 app.use('/api/parcours', parcoursRoutes);
 app.use('/parcours', parcoursRoutes); // Alias to match documentation
 app.use('/api/planning', planningRoutes);
+app.use('/api/generate-batch', batchRoutes);
 app.use('/course', courseRoutes);
 
 app.post('/api/h5p/generate', async (req, res) => {

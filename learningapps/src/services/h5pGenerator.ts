@@ -149,13 +149,14 @@ export class H5PGenerator {
 
         // 3. Write h5p.json
         const h5pJson = {
-            title: params.metadata?.title || "Generated Content",
+            title: params.metadata?.title || "Activité",
             language: "fr",
             mainLibrary: mainMachineName,
             license: "U",
             defaultLanguage: "fr",
             embedTypes: ["div"],
-            preloadedDependencies: uniqueDeps
+            preloadedDependencies: uniqueDeps,
+            extraTitle: params.metadata?.title || "Activité"
         };
 
         await fs.writeJson(path.join(outputDir, 'h5p.json'), h5pJson);
@@ -185,7 +186,7 @@ export class H5PGenerator {
         console.log(`Generated content at ${outputDir}`);
         return { path: outputDir, folder: timestamp, id: timestamp, iframeUrl };
     }
-    public async generateInteractiveBook(modules: { type: string, id: string }[]): Promise<H5PContentResult> {
+    public async generateInteractiveBook(modules: { type: string, id: string, title?: string }[], bookTitle?: string): Promise<H5PContentResult> {
         const chapters: any[] = [];
         const timestamp = Date.now().toString();
         const outputDir = path.join(H5P_CONTENT_DIR, timestamp);
@@ -204,7 +205,7 @@ export class H5PGenerator {
 
         for (const module of modules) {
             let chapterContent: any = null;
-            let title = `Module ${module.type} ${module.id}`;
+            let title = module.title || `Module ${module.type}`;
 
             if (module.type === 'h5p') {
                 try {
@@ -214,7 +215,7 @@ export class H5PGenerator {
                         const contentJson = await fs.readJson(path.join(contentDir, 'content.json'));
                         const mainLib = h5pJson.mainLibrary; // e.g., "H5P.MultiChoice"
 
-                        title = h5pJson.title || title;
+                        title = module.title || h5pJson.title || title;
 
                         if (supportedLibraries.includes(mainLib)) {
                             // Native integration
@@ -222,7 +223,7 @@ export class H5PGenerator {
                                 library: `${mainLib} ${h5pJson.preloadedDependencies.find((d: any) => d.machineName === mainLib).majorVersion}.${h5pJson.preloadedDependencies.find((d: any) => d.machineName === mainLib).minorVersion}`,
                                 params: contentJson,
                                 subContentId: module.id,
-                                metadata: h5pJson.metadata || { title: title }
+                                metadata: { title: title }
                             };
                         } else {
                             // Fallback to IFrameEmbed
@@ -241,7 +242,7 @@ export class H5PGenerator {
                             chapterContent = {
                                 library: 'H5P.IFrameEmbed 1.0',
                                 params: {
-                                    src: iframeUrl,
+                                    source: iframeUrl,
                                     width: "100%",
                                     height: "600px",
                                     resizeSupported: false
@@ -256,17 +257,17 @@ export class H5PGenerator {
                 }
             } else if (module.type === 'learningapps') {
                 // LearningApps -> IFrameEmbed
-                const learningAppsUrl = `https://learningapps.org/watch?v=${module.id}`;
+                title = module.title || `Exercice: ${module.id}`;
                 chapterContent = {
                     library: 'H5P.IFrameEmbed 1.0',
                     params: {
-                        src: learningAppsUrl,
+                        source: learningAppsUrl,
                         width: "100%",
                         height: "600px",
                         resizeSupported: false
                     },
                     subContentId: `la-${module.id}`,
-                    metadata: { title: `LearningApps ${module.id}` }
+                    metadata: { title: title }
                 };
             }
 
@@ -294,7 +295,8 @@ export class H5PGenerator {
                 defaultTableOfContents: true,
                 progressIndicators: true,
                 displaySummary: true
-            }
+            },
+            metadata: { title: bookTitle || "Parcours d'apprentissage" }
         };
 
         // Generate the book
