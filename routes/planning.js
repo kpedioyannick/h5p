@@ -14,7 +14,7 @@ if (process.env.OPENAI_API_KEY) {
 
 router.post('/', async (req, res) => {
     try {
-        const { request, count, classroom, subject, chapter, subChapter, type, contexte, lang, forceGeneratePath } = req.body;
+        const { request, userId, classroom, subject, chapter, subChapter, type, contexte, lang, forceGeneratePath } = req.body;
         const level = classroom || req.body.level;
 
         if (!request) {
@@ -25,76 +25,104 @@ router.post('/', async (req, res) => {
             return res.status(500).json({ error: 'OpenAI API key not configured' });
         }
 
-        const h5pLibraries = [
-            "H5P.MultiChoice 1.16", "H5P.TrueFalse 1.8", "H5P.DragQuestion 1.14", "H5P.Blanks 1.12",
-            "H5P.MarkTheWords 1.11", "H5P.Flashcards 1.5",
-            "H5P.QuestionSet 1.20", "H5P.SingleChoiceSet 1.11",
-            "H5P.DragText 1.10"
-        ];
+        const MODULE_GROUPS = {
+            "CHOICE": [
+                { type: "h5p", library: "H5P.MultiChoice 1.16" },
+                { type: "h5p", library: "H5P.TrueFalse 1.8" },
+                { type: "learningapps", module: "Qcm" }
+            ],
+            "BLANKS": [
+                { type: "h5p", library: "H5P.Blanks 1.12" },
+                { type: "learningapps", module: "FillTable" },
+                { type: "learningapps", module: "TextInputQuiz" }
+            ],
+            "MATCHING": [
+                { type: "h5p", library: "H5P.DragQuestion 1.14" },
+                { type: "learningapps", module: "Pairmatching" },
+                { type: "learningapps", module: "Grouping" },
+                { type: "learningapps", module: "SortingPuzzle" }
+            ],
+            "ORDERING": [
+                { type: "h5p", library: "H5P.SortParagraphs 1.3" },
+                { type: "h5p", library: "H5P.Timeline 1.1" },
+                { type: "learningapps", module: "Ordering" },
+                { type: "learningapps", module: "TimelineAxis" }
+            ],
+            "MEMORY_CARDS": [
+                { type: "h5p", library: "H5P.Flashcards 1.5" },
+                { type: "h5p", library: "H5P.MemoryGame 1.3" },
+                { type: "h5p", library: "H5P.Dialogcards 1.9" },
+                { type: "learningapps", module: "WriteAnswerCards" }
+            ],
+            "WRITING": [
+                { type: "h5p", library: "H5P.Essay 1.5" }
+            ],
+            "GAMES": [
+                { type: "learningapps", module: "Hangman" },
+                { type: "h5p", library: "H5P.GuessTheAnswer 1.5" }
+            ]
+        };
 
-        const learningAppsModules = [
-            "Qcm", "Fillblanks", "Grouping", "Hangman", "HorseRace", "Millionaire",
-            "Ordering", "Pairmatching", "WriteAnswerCards", "TextInputQuiz"
-        ];
+        let sujetTraitement = `- Subject : ${request}`;
+        if (subject) sujetTraitement += `\n        - Matière : ${subject}`;
+        if (chapter) sujetTraitement += `\n        - Chapter : ${chapter}`;
+        if (subChapter) sujetTraitement += `\n        - Sub-chapter : ${subChapter}`;
 
-        const moduleCount = count || "4 to 6";
+        let mandatoryKeys = `          - subject`;
+        if (chapter) mandatoryKeys += `\n          - chapter`;
+        if (subChapter) mandatoryKeys += `\n          - sub_chapter`;
+        mandatoryKeys += `\n          - sub_chapters (décomposition du sujet en sous-blocs pédagogiques)`;
 
         const prompt = `
-        IMPORTANT: Your primary goal is to CREATE a professional pedagogical structure based on the user's specific REQUEST. 
-        Detect the language of the REQUEST (support English, French, and Arabic) and generate the entire response in THAT SAME LANGUAGE.
-        
-        TARGET AUDIENCE (Default): Your default audience is STUDENTS in Primary, Middle, or High School. 
-        Adapt the tone, complexity, and pedagogical depth accordingly.
-        
-        STRICT RULES:
-        1. YOU MUST REDEFINE the Pedagogical Metadata (Subject, Chapter, SubChapter, and Level) based on the REQUEST.
-        2. FORBIDDEN: Do not copy the user's optional input directly. You must transform them into professional, precise, and descriptive academic titles.
-        3. If optional inputs are missing, deduce them entirely from the REQUEST.
-        
-        CORE USER REQUEST: "${request}"
-        
-        Optional Supporting Info:
-        - Provided Level: ${level || 'Not provided'}
-        - Provided Subject: ${subject || 'Not provided'}
-        - Provided Chapter: ${chapter || 'Not provided'}
-        - Provided SubChapter: ${subChapter || 'Not provided'}
-        - Activity Type: ${type || 'Not provided'}
-        - Specific Context: ${contexte || 'Not provided'}
+        Tu es un expert en ingénierie pédagogique pour les élèves débutants, taxonomie de Bloom et création de contenus interactifs sur ${request}. 
+        Ta mission est de :
+        1. Reformuler le titre et SUJET et le CHAPITRE pour qu'ils soient pédagogiquement pertinents (ex: "cellule" -> "La structure de la cellule végétale").
+        2. Décomposition du sujet reformulé en plusieurs SOUS-CHAPITRES (ou sous-blocs) logiques et cohérents.
+        3. Pour chaque sous-chapitre, générer une progression basée sur la taxonomie de Bloom.
 
-        The output MUST be a JSON object with this exact structure:
-        {
-            "title": "Title of the study plan in the same language as the request",
-            "modules": [
-                {
-                    "type": "h5p",
-                    "library": "Choose from: ${h5pLibraries.join(', ')}",
-                    "title": "Professional Module Title",
-                    "prompt": "Detailed AI prompt to generate content in the request language",
-                    "difficulty": "easy/medium/hard",
-                    "category": "course/exercise/exam"
-                },
-                {
-                    "type": "learningapps",
-                    "module": "Choose from: ${learningAppsModules.join(', ')}",
-                    "title": "Professional Module Title",
-                    "prompt": "Detailed AI prompt to generate content in the request language",
-                    "difficulty": "easy/medium/hard",
-                    "category": "course/exercise/exam"
-                }
-            ],
-            "contexte": {
-                "subject": "YOUR REDEFINED PROFESSIONAL SUBJECT",
-                "chapter": "YOUR REDEFINED PROFESSIONAL CHAPTER",
-                "subChapter": "YOUR REDEFINED PROFESSIONAL SUB-CHAPTER",
-                "level": "YOUR REDEFINED PROFESSIONAL LEVEL",
-                "lang": "detected language code ('fr', 'en', or 'ar')"
-            }
-        }
+        Sujet initial : ${request}
+        Matière initiale : ${subject || 'Non précisée'}
+        Chapitre initial : ${chapter || 'Général'}
+ 
+        Contraintes OBLIGATOIRES :
+        - Le JSON doit contenir les clés suivantes :
+          - subject (votre version REFORMULÉE et professionnelle)
+          - chapter (votre version REFORMULÉE et professionnelle)
+          - sub_chapters (décomposition du sujet en sous-blocs pédagogiques)
 
-        Rules:
-        - Propose exactly ${moduleCount} modules.
-        - Mix H5P and LearningApps appropriately.
-        - Use "gpt-4o-mini" capabilities for deep pedagogical relevance.
+        - Le tableau "sub_chapters" doit contenir la décomposition logique du sujet.
+        - Chaque étape dans "sub_chapters" doit avoir :
+          - title (titre thématique du sous-chapitre)
+          - bloom_taxonomy (un tableau de 6 niveaux de Bloom spécifiques à ce sous-chapitre)
+
+        - Pour chaque "bloom_taxonomy", utiliser STRICTEMENT les 6 niveaux dans cet ordre :
+          1. remember
+          2. understand
+          3. apply
+          4. analyze
+          5. evaluate
+          6. create
+
+        - Chaque niveau de Bloom doit contenir :
+          - level (1 à 6)
+          - name
+          - objective
+          - modules (tableau)
+
+        Règles des modules :
+        - Déterminer pour chaque module un GROUPE idéal parmi : ${Object.keys(MODULE_GROUPS).join(', ')}
+        - Chaque niveau de Bloom doit contenir au moins 1 module.
+        - Chaque module doit contenir UNIQUEMENT :
+          - module_group (Le groupe choisi)
+          - objective (consignes et objectif pédagogique extrêmement détaillés pour l'outil de génération, spécifiques au thème du sous-chapitre et au niveau de Bloom)
+          - count (nombre d'éléments, ex: 5)
+
+        - IMPORTANT : Tout le contenu généré doit être STRICTEMENT centré sur l'aspect spécifique de "${request}".
+
+
+        Format de sortie :
+        - JSON valide uniquement
+        - Aucune phrase hors JSON
         `;
 
         const completion = await openai.chat.completions.create({
@@ -106,53 +134,83 @@ router.post('/', async (req, res) => {
         const content = completion.choices[0].message.content;
         let result = JSON.parse(content);
 
-        // Ensure metadata is filled, prioritizing AI's REDEFINED values
-        result.contexte = {
-            subject: result.contexte?.subject || subject || "General",
-            chapter: result.contexte?.chapter || chapter || "Introduction",
-            subChapter: result.contexte?.subChapter || subChapter || "Overview",
-            level: result.contexte?.level || level || "General",
-            lang: result.contexte?.lang || lang || "fr"
-        };
-
         if (forceGeneratePath) {
-            console.log("🛠 Force generating path content...");
+            console.log("🛠 Force generating path content with sub-chapter Bloom structure...");
             const generatedModules = [];
-            for (const module of result.modules) {
-                console.log(`  Generating module: ${module.title} (${module.type})`);
-                if (module.type === 'h5p') {
-                    try {
-                        const h5pResult = await h5pGenerator.generateAI(openai, module.library, module.prompt, 1);
-                        if (h5pResult.success && h5pResult.results.length > 0) {
-                            generatedModules.push({
-                                type: 'h5p',
-                                id: h5pResult.results[0].id,
-                                title: module.title
-                            });
-                        }
-                    } catch (e) {
-                        console.error(`Error generating H5P module ${module.title}:`, e);
-                    }
-                } else if (module.type === 'learningapps') {
-                    try {
-                        const laBaseUrl = process.env.LEARNINGAPPS_API_URL || 'http://localhost:3001';
-                        // Use module.prompt as topic for LearningApps AI generation
-                        const laResponse = await axios.post(`${laBaseUrl}/api/content/learningapps/ai`, {
-                            module: module.module,
-                            topic: module.prompt,
-                            count: 1
-                        });
 
-                        if (laResponse.data.success && laResponse.data.results && laResponse.data.results.length > 0) {
-                            const laResult = laResponse.data.results[0];
-                            generatedModules.push({
-                                type: 'learningapps',
-                                id: laResult.appId,
-                                title: module.title
-                            });
+            // Iterate through sub-chapters, then Bloom levels, then modules
+            for (const subChapter of result.sub_chapters || []) {
+                console.log(`Processing Sub-Chapter: ${subChapter.title}`);
+                for (const level of subChapter.bloom_taxonomy || []) {
+                    console.log(`  Processing Bloom Level ${level.level}: ${level.name}`);
+                    for (const moduleObj of level.modules || []) {
+                        // Selection logic: Pick a specific implementation from the group
+                        const groupName = moduleObj.module_group;
+                        const groupOptions = MODULE_GROUPS[groupName] || MODULE_GROUPS["CHOICE"];
+
+                        // Pick a random implementation from the group for variety
+                        const selection = groupOptions[Math.floor(Math.random() * groupOptions.length)];
+                        moduleObj.type = selection.type;
+                        if (selection.type === 'h5p') moduleObj.library = selection.library;
+                        if (selection.type === 'learningapps') moduleObj.module = selection.module;
+
+                        // Use objective as prompt if prompt is missing
+                        const generationPrompt = moduleObj.prompt || moduleObj.objective;
+                        // Use objective as title if title is missing (first 50 chars)
+                        if (!moduleObj.title) {
+                            moduleObj.title = moduleObj.objective.length > 50
+                                ? moduleObj.objective.substring(0, 47) + '...'
+                                : moduleObj.objective;
                         }
-                    } catch (e) {
-                        console.error(`Error generating LearningApps module ${module.title}:`, e);
+
+                        console.log(`    Generating module: ${moduleObj.title} (Group: ${groupName} -> ${moduleObj.module || moduleObj.library})`);
+                        if (moduleObj.type === 'h5p') {
+                            try {
+                                const libraryName = moduleObj.library || "H5P.MultiChoice 1.16";
+                                const h5pResult = await h5pGenerator.generateAI(openai, libraryName, generationPrompt, moduleObj.count || 1);
+                                if (h5pResult.success && h5pResult.results.length > 0) {
+                                    const genId = h5pResult.results[0].id;
+                                    const genUrl = h5pResult.results[0].url;
+
+                                    moduleObj.id = genId;
+                                    moduleObj.url = genUrl;
+
+                                    generatedModules.push({
+                                        type: 'h5p',
+                                        id: genId,
+                                        title: moduleObj.title
+                                    });
+                                }
+                            } catch (e) {
+                                console.error(`Error generating H5P module ${moduleObj.title}:`, e);
+                            }
+                        } else if (moduleObj.type === 'learningapps') {
+                            try {
+                                const laBaseUrl = process.env.LEARNINGAPPS_API_URL || 'http://localhost:3001';
+                                const laResponse = await axios.post(`${laBaseUrl}/api/content/learningapps/ai`, {
+                                    module: moduleObj.module,
+                                    topic: generationPrompt,
+                                    count: moduleObj.count || 1
+                                });
+
+                                if (laResponse.data.success && laResponse.data.results && laResponse.data.results.length > 0) {
+                                    const laResult = laResponse.data.results[0];
+                                    const genId = laResult.appId;
+                                    const genUrl = `https://learningapps.org/watch?v=${genId}`;
+
+                                    moduleObj.id = genId;
+                                    moduleObj.url = genUrl;
+
+                                    generatedModules.push({
+                                        type: 'learningapps',
+                                        id: genId,
+                                        title: moduleObj.title
+                                    });
+                                }
+                            } catch (e) {
+                                console.error(`Error generating LearningApps module ${moduleObj.title}:`, e);
+                            }
+                        }
                     }
                 }
             }
@@ -160,7 +218,7 @@ router.post('/', async (req, res) => {
             if (generatedModules.length > 0) {
                 // Generate Parcours (Interactive Book)
                 const baseUrl = `${req.protocol}://${req.get('host')}`;
-                const bookResult = await h5pGenerator.generateInteractiveBook(generatedModules, baseUrl, result.title);
+                const bookResult = await h5pGenerator.generateInteractiveBook(generatedModules, baseUrl, result.subject || result.title);
 
                 result.parcours = {
                     id: bookResult.id,
@@ -172,7 +230,6 @@ router.post('/', async (req, res) => {
         }
 
         res.json(result);
-
     } catch (err) {
         console.error('Planning Error:', err);
         res.status(500).json({ error: err.message });
