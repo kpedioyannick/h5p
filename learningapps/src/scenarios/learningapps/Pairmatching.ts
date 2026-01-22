@@ -1,6 +1,6 @@
 import { Page } from 'playwright';
 import { ScenarioParams } from '../../types/index.js';
-import { initLearningAppsSession, setContentElement } from '../../services/learningapps/helpers.js';
+import { initLearningAppsSession, setContentElement, setSuccessMessage } from '../../services/learningapps/helpers.js';
 
 /**
  * Scénario pour créer un "Classer par paire" sur LearningApps
@@ -98,22 +98,24 @@ export default async function createPairmatching(page: Page, params: ScenarioPar
         });
       }
     }
-  }
+    // Remplir le message de succès
+    await setSuccessMessage(page, params.successMessage as string);
 
-  // Afficher un aperçu
-  await page.getByRole('button', { name: '  Afficher un aperçu' }).click();
-  const previewFrame = page.locator('iframe').contentFrame();
-  if (previewFrame) {
-    const innerFrame = previewFrame.locator('#frame').contentFrame();
-    if (innerFrame) {
-      await innerFrame.getByRole('button', { name: 'OK' }).click();
+    // Afficher un aperçu
+    await page.getByRole('button', { name: '  Afficher un aperçu' }).click();
+    const previewFrame = page.locator('iframe').contentFrame();
+    if (previewFrame) {
+      const innerFrame = previewFrame.locator('#frame').contentFrame();
+      if (innerFrame) {
+        await innerFrame.getByRole('button', { name: 'OK' }).click();
+      }
     }
+
+    // Sauvegarder
+    await page.getByRole('button', { name: ' Enregistrer l\'appli' }).click();
+
+    // Attendre la redirection vers la page de l'app créée
+    await page.waitForURL(/\/display\?v=|learningapps\.org\/\d+$/, { timeout: 15000 });
   }
-
-  // Sauvegarder
-  await page.getByRole('button', { name: ' Enregistrer l\'appli' }).click();
-
-  // Attendre la redirection vers la page de l'app créée
-  await page.waitForURL(/\/display\?v=|learningapps\.org\/\d+$/, { timeout: 15000 });
 }
 

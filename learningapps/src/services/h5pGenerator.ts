@@ -258,6 +258,8 @@ export class H5PGenerator {
             } else if (module.type === 'learningapps') {
                 // LearningApps -> IFrameEmbed
                 title = module.title || `Exercice: ${module.id}`;
+                const learningAppsUrl = process.env.LEARNINGAPPS_BASE_URL ? `${process.env.LEARNINGAPPS_BASE_URL}/display?v=${module.id}` : `https://learningapps.org/display?v=${module.id}`;
+
                 chapterContent = {
                     library: 'H5P.IFrameEmbed 1.0',
                     params: {

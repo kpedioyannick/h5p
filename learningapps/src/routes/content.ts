@@ -131,6 +131,12 @@ router.post('/learningapps/ai', async (req: Request, res: Response) => {
     Each object must match the structure required by the scenario.
     Do not include markdown formatting or explanations.
     
+    For ALL modules, you can optionally include:
+    "successMessage": "Message de félicitations (ex: Bravo !)"
+    "help": "Indice général (ex: Utilise tes doigts)"
+
+    Specific schemas:
+
     For "Qcm":
     {
       "title": "Title in French",
@@ -162,11 +168,110 @@ router.post('/learningapps/ai', async (req: Request, res: Response) => {
       "title": "Title in French",
       "task": "Task description in French",
       "levels": [
+        // MUST generate exactly 6 levels (increasing difficulty)
         {
-          "question": { "text": "Question Level 1", "type": "text" },
+          "question": { "text": "Question Level 1 (Easy)", "type": "text" },
           "answers": ["Correct", "Wrong", "Wrong", "Wrong"]
-        }
+        },
+        ... (exactly 6 levels total)
       ]
+    }
+    // The 'levels' array MUST contain exactly 6 objects.
+
+    For "GrilleCorrespondance":
+    {
+      "title": "Titre",
+      "task": "Consigne",
+      "rows": [
+        [
+          { "type": "text", "text": "Élément 1" },
+          { "type": "text", "text": "Correspondance 1" }
+        ],
+        [
+          { "type": "text", "text": "Élément 2" },
+          { "type": "text", "text": "Correspondance 2" }
+        ]
+      ]
+    }
+
+    For "HorseRace":
+    {
+      "title": "Titre",
+      "task": "Consigne",
+      "questions": [
+        // MUST generate at least 5 questions for this module to be playable
+        {
+          "question": "Question texte",
+          "answers": [
+            { "content": { "text": "Réponse correcte", "type": "text" }, "is_correct": true },
+            { "content": { "text": "Réponse incorrecte", "type": "text" }, "is_correct": false }
+          ]
+        },
+        ... (at least 5 questions total)
+      ]
+    }
+
+    For "Grouping":
+    {
+      "title": "Titre",
+      "task": "Consigne",
+      "clusters": [
+        { "name": "Groupe 1", "items": ["Item A", "Item B"] },
+        { "name": "Groupe 2", "items": ["Item C"] }
+      ]
+    }
+    
+    For "Ordering":
+    {
+      "title": "Titre",
+      "task": "Consigne",
+      "items": [
+        { "text": "Étape 1" },
+        { "text": "Étape 2" },
+        { "text": "Étape 3" }
+      ]
+    }
+
+    For "Pairmatching":
+    {
+      "title": "Titre",
+      "task": "Consigne",
+      "pairs": [
+        { "v1": { "text": "A" }, "v2": { "text": "B" } },
+        { "v1": { "text": "C" }, "v2": { "text": "D" } }
+      ]
+    }
+
+    For "Hangman":
+    {
+      "title": "Titre",
+      "task": "Consigne",
+      "words": [
+        { "word": "BANANE", "hint": { "text": "Fruit jaune" } },
+        { "word": "AVION", "hint": { "text": "Vole dans le ciel" } }
+      ]
+    }
+    
+    For "WriteAnswerCards":
+    {
+      "title": "Titre",
+      "task": "Consigne",
+      "cards": [
+        { "question": "Capitale France ?", "solution": "Paris" },
+        { "question": "2 + 2 ?", "solution": "4" }
+      ]
+    }
+
+    For "FillTable":
+    {
+      "title": "Titre",
+      "task": "Consigne",
+      "table": {
+        "rows": [
+          { "cells": ["En-tête 1", "En-tête 2"] },
+          { "cells": ["Donnée 1", "Donnée 2"] }
+        ]
+      }
     }
 
     Ensure all text is in French.

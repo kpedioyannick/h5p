@@ -1,6 +1,6 @@
 import { Page } from 'playwright';
 import { ScenarioParams } from '../../types/index.js';
-import { initLearningAppsSession, setContentElement } from '../../services/learningapps/helpers.js';
+import { initLearningAppsSession, setContentElement, setSuccessMessage } from '../../services/learningapps/helpers.js';
 
 /**
  * Scénario pour créer un QCM sur LearningApps
@@ -75,7 +75,7 @@ export default async function createQCM(page: Page, params: ScenarioParams) {
 
       // Remplir la question selon son type
       const questionType = (question as any).question_type || 'text';
-      
+
       await setContentElement(page, `question${questionNum}`, {
         type: questionType as any,
         text: question.question_text,
@@ -100,7 +100,7 @@ export default async function createQCM(page: Page, params: ScenarioParams) {
 
           // Gérer le type de réponse
           const answerType = (answer.type as string) || 'text';
-          
+
           await setContentElement(page, `answer${questionNum}_${answerNum}`, {
             type: answerType as any,
             text: answer.answer_text,
@@ -118,6 +118,9 @@ export default async function createQCM(page: Page, params: ScenarioParams) {
       }
     }
   }
+
+  // Remplir le message de succès
+  await setSuccessMessage(page, params.successMessage as string);
 
   // 10. Cliquer sur "Évaluation à la fin" (optionnel, peut être paramétré)
   if (params.evaluationAtEnd !== false) {

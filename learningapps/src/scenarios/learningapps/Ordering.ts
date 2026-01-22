@@ -1,6 +1,6 @@
 import { Page } from 'playwright';
 import { ScenarioParams } from '../../types/index.js';
-import { initLearningAppsSession, setContentElement } from '../../services/learningapps/helpers.js';
+import { initLearningAppsSession, setContentElement, setSuccessMessage } from '../../services/learningapps/helpers.js';
 
 /**
  * Scénario pour créer un "Ordre simple" sur LearningApps
@@ -96,13 +96,8 @@ export default async function createOrdering(page: Page, params: ScenarioParams)
     }
   }
 
-  // Remplir le message de succès si fourni
-  if (params.successMessage) {
-    const successElement = page.getByText('Bravo, tu as trouvé la bonne');
-    if (await successElement.count() > 0) {
-      await successElement.fill(params.successMessage as string);
-    }
-  }
+  // Remplir le message de succès
+  await setSuccessMessage(page, params.successMessage as string);
 
   // Remplir le texte d'aide si fourni
   if (params.help) {

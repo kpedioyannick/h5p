@@ -1,6 +1,6 @@
 import { Page } from 'playwright';
 import { ScenarioParams } from '../../types/index.js';
-import { initLearningAppsSession, setContentElement } from '../../services/learningapps/helpers.js';
+import { initLearningAppsSession, setContentElement, setSuccessMessage } from '../../services/learningapps/helpers.js';
 
 /**
  * Scénario pour créer un "Regroupement" sur LearningApps
@@ -123,14 +123,8 @@ export default async function createGrouping(page: Page, params: ScenarioParams)
     await page.locator('#LearningApp_help').fill(params.help as string);
   }
 
-  // Remplir le message de succès si fourni
-  if (params.successMessage) {
-    // Le message de succès semble être dans un élément avec le texte "Super, tu as trouvé la bonne"
-    const successElement = page.getByText('Super, tu as trouvé la bonne');
-    if (await successElement.count() > 0) {
-      await successElement.fill(params.successMessage as string);
-    }
-  }
+  // Remplir le message de succès
+  await setSuccessMessage(page, params.successMessage as string);
 
   // Afficher un aperçu
   await page.getByRole('button', { name: '  Afficher un aperçu' }).click();

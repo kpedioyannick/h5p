@@ -1,6 +1,6 @@
 import { Page } from 'playwright';
 import { ScenarioParams } from '../../types/index.js';
-import { initLearningAppsSession, setContentElement } from '../../services/learningapps/helpers.js';
+import { initLearningAppsSession, setContentElement, setSuccessMessage } from '../../services/learningapps/helpers.js';
 
 /**
  * Scénario pour créer un "Pendu" sur LearningApps
@@ -68,7 +68,10 @@ export default async function createHangman(page: Page, params: ScenarioParams) 
     }
   }
 
-    // 11. Afficher un aperçu (optionnel)
+  // Remplir le message de succès
+  await setSuccessMessage(page, params.successMessage as string);
+
+  // 11. Afficher un aperçu (optionnel)
   await page.getByRole('button', { name: '  Afficher un aperçu' }).click();
   const previewFrame = page.locator('iframe').contentFrame();
   if (previewFrame) {

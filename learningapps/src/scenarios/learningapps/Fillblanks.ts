@@ -1,6 +1,6 @@
 import { Page } from 'playwright';
 import { ScenarioParams } from '../../types/index.js';
-import { initLearningAppsSession, setContentElement } from '../../services/learningapps/helpers.js';
+import { initLearningAppsSession, setContentElement, setSuccessMessage } from '../../services/learningapps/helpers.js';
 
 /**
  * Scénario pour créer un "Texte à trous" sur LearningApps
@@ -64,7 +64,7 @@ export default async function createFillblanks(page: Page, params: ScenarioParam
   if (!clozetext) {
     throw new Error('clozetext is required');
   }
-  
+
   await page.locator('#clozetext').fill(clozetext);
 
   // Remplir les réponses pour chaque trou
@@ -73,19 +73,26 @@ export default async function createFillblanks(page: Page, params: ScenarioParam
     for (let i = 0; i < clozes.length; i++) {
       const cloze = clozes[i];
       const clozeIndex = i + 1;
-      
+
       // Si ce n'est pas le premier trou, ajouter un élément
       if (i > 0) {
         await page.getByRole('button', { name: ' ajouter un élément' }).click();
         await page.waitForTimeout(500);
       }
-      
+
       // Remplir la réponse
       await page.locator(`#cloze${clozeIndex}`).fill(cloze.answer);
     }
   }
 
-  // Afficher un aperçu
+  if (params.help) {
+    await page.locator('#LearningApp_help').fill(params.help as string);
+  }
+
+  // Remplir le message de succès
+  await setSuccessMessage(page, params.successMessage as string);
+
+  // 10. Afficher un aperçu (optionnel)
   await page.getByRole('button', { name: '  Afficher un aperçu' }).click();
   const previewFrame = page.locator('iframe').contentFrame();
   if (previewFrame) {

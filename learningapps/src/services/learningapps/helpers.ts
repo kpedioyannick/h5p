@@ -205,3 +205,51 @@ export async function setContentElement(
   }
 }
 
+/**
+ * Définit le message de succès / feedback
+ */
+export async function setSuccessMessage(page: Page, message: string): Promise<void> {
+  if (!message) return;
+
+  // Essayer l'ID standard
+  const standardInput = page.locator('#LearningApp_feedback');
+  if (await standardInput.count() > 0 && await standardInput.isVisible()) {
+    console.log(`Setting success message via #LearningApp_feedback: "${message}"`);
+    await standardInput.fill(message);
+    return;
+  }
+
+  // Fallback: chercher par texte approximatif (Regex)
+  const defaultPatterns = [
+    /Bravo/,
+    /Super/,
+    /Félicitations/i,
+    /Feedback/i,
+    /Rétroaction/i,
+    /Correct/i
+  ];
+
+  for (const pattern of defaultPatterns) {
+    // On cherche un élément (input/textarea) qui contient ce texte (valeur par défaut)
+    // OU un label qui contient ce texte
+
+    // 1. Chercher si un textarea contient déjà ce texte (valeur par défaut)
+    try {
+      const textAreas = page.locator('textarea, input[type="text"]');
+      const count = await textAreas.count();
+      for (let i = 0; i < count; i++) {
+        const val = await textAreas.nth(i).inputValue();
+        if (pattern.test(val)) {
+          console.log(`Found input with default text matching ${pattern}. Filling...`);
+          await textAreas.nth(i).fill(message);
+          return;
+        }
+      }
+    } catch (e) { /* ignore */ }
+
+    // 2. Chercher un label/div et son champ associé
+    // TODO if needed
+  }
+
+  console.warn(`Could not set success message: input not found for message "${message}"`);
+}
