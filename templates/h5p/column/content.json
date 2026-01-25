@@ -1,0 +1,736 @@
+{
+    "content": [
+        {
+            "content": {
+                "params": {
+                    "mode": "repetition",
+                    "dialogs": [
+                        {
+                            "text": "<p style=\"text-align:center;\">Hint for the first part of the dialogue</p>",
+                            "answer": "<p style=\"text-align:center;\">Hint for the second part of the dialogue</p>",
+                            "tips": {}
+                        },
+                        {
+                            "text": "<p style=\"text-align:center;\">Hint for the second part of the dialogue</p>",
+                            "answer": "<p style=\"text-align:center;\">Hint for the second part of the dialogue</p>",
+                            "tips": {}
+                        }
+                    ],
+                    "behaviour": {
+                        "enableRetry": true,
+                        "disableBackwardsNavigation": false,
+                        "scaleTextNotCard": false,
+                        "randomCards": false,
+                        "maxProficiency": 5,
+                        "quickProgression": false
+                    },
+                    "answer": "Retourner",
+                    "next": "Suivant",
+                    "prev": "Précédent",
+                    "retry": "Recommencer",
+                    "correctAnswer": "J&#039;ai eu bon!",
+                    "incorrectAnswer": "J&#039;ai eu faux",
+                    "round": "Round @round",
+                    "cardsLeft": "Cartes restantes: @number",
+                    "nextRound": "Procéder au round @round",
+                    "startOver": "Recommencer",
+                    "showSummary": "Suivant",
+                    "summary": "Résumé",
+                    "summaryCardsRight": "Cartes correctes:",
+                    "summaryCardsWrong": "Cartes incorrectes:",
+                    "summaryCardsNotShown": "Cartes non montrées:",
+                    "summaryOverallScore": "Score global",
+                    "summaryCardsCompleted": "Cartes que vous avez complétées:",
+                    "summaryCompletedRounds": "Rounds complétés:",
+                    "summaryAllDone": "Bien joué! Vous avez réussi à avoir les @cards cartes correctes @max fois de suite!",
+                    "progressText": "Carte @card sur @total",
+                    "cardFrontLabel": "Le devant de la carte",
+                    "cardBackLabel": "Le dos de la carte",
+                    "tipButtonLabel": "Montrer l&#039;indice",
+                    "audioNotSupported": "Votre navigateur ne supporte pas ce fichier audio",
+                    "confirmStartingOver": {
+                        "header": "Recommencer?",
+                        "body": "Toutes les progressions seront perdues. Êtes-vous sûr de vouloir recommencer?",
+                        "cancelLabel": "Annuler",
+                        "confirmLabel": "Recommencer"
+                    },
+                    "title": "<p>Dialog Cards</p>",
+                    "description": "<p><strong>Task description</strong></p>"
+                },
+                "library": "H5P.Dialogcards 1.9",
+                "metadata": {
+                    "contentType": "Dialog Cards",
+                    "license": "U",
+                    "title": "Dialog Cards",
+                    "authors": [],
+                    "changes": [],
+                    "extraTitle": "Dialog Cards"
+                },
+                "subContentId": "34168479-e648-4bbb-bbcc-9441c0a45912"
+            },
+            "useSeparator": "auto"
+        },
+        {
+            "content": {
+                "params": {
+                    "media": {
+                        "type": {
+                            "params": {}
+                        },
+                        "disableImageZooming": false
+                    },
+                    "taskDescription": "Drag the words into the correct boxes",
+                    "overallFeedback": [
+                        {
+                            "from": 0,
+                            "to": 100
+                        }
+                    ],
+                    "checkAnswer": "Vérifier",
+                    "submitAnswer": "Vérifier",
+                    "tryAgain": "Recommencer",
+                    "showSolution": "Voir la correction",
+                    "dropZoneIndex": "Zone de dépôt @index.",
+                    "empty": "La zone de dépôt @index est vide.",
+                    "contains": "La zone de dépôt @index contient un élément déplaçable @draggable.",
+                    "ariaDraggableIndex": "@index sur @count éléments déplaçables.",
+                    "tipLabel": "Montrer l&#039;indice",
+                    "correctText": "Correct !",
+                    "incorrectText": "Incorrect !",
+                    "resetDropTitle": "Reparamétrer le déplacement",
+                    "resetDropDescription": "Etes-vous certain de vouloir reparamétrer cet élément déplaçable ?",
+                    "grabbed": "L&#039;élément déplaçable est saisi.",
+                    "cancelledDragging": "Annuler le déplacement.",
+                    "correctAnswer": "Réponse correcte :",
+                    "feedbackHeader": "Commentaire de retour",
+                    "behaviour": {
+                        "enableRetry": true,
+                        "enableSolutionsButton": true,
+                        "enableCheckButton": true,
+                        "instantFeedback": false
+                    },
+                    "scoreBarLabel": "Vous avez obtenu :num sur un total de :points",
+                    "a11yCheck": "Check the answers. The responses will be marked as correct, incorrect, or unanswered.",
+                    "a11yShowSolution": "Afficher la solution. La tâche sera notée avec sa solution correcte.",
+                    "a11yRetry": "Réessayer la tâche. Réinitialiser toutes les réponses et recommencer la tâche.",
+                    "textField": "H5P content may be edited using a *browser:What type of program is Chrome?*.\nH5P content is *interactive\\+Correct! \\-Incorrect, try again!*"
+                },
+                "library": "H5P.DragText 1.10",
+                "metadata": {
+                    "contentType": "Drag the Words",
+                    "license": "U",
+                    "title": "Sans titre Drag the Words",
+                    "authors": [],
+                    "changes": [],
+                    "extraTitle": "Sans titre Drag the Words"
+                },
+                "subContentId": "b2f214c3-5f44-4209-9a66-0287b2c498e6"
+            },
+            "useSeparator": "auto"
+        },
+        {
+            "content": {
+                "params": {
+                    "media": {
+                        "type": {
+                            "params": {}
+                        },
+                        "disableImageZooming": false
+                    },
+                    "text": "Fill in the missing words",
+                    "overallFeedback": [
+                        {
+                            "from": 0,
+                            "to": 100
+                        }
+                    ],
+                    "showSolutions": "Voir la correction",
+                    "tryAgain": "Recommencer",
+                    "checkAnswer": "Vérifier",
+                    "submitAnswer": "Vérifier",
+                    "notFilledOut": "Vous devez avoir rempli tous les blancs avant de voir la correction",
+                    "answerIsCorrect": "&#039;:ans&#039; est une réponse exacte",
+                    "answerIsWrong": "&#039;:ans&#039; est une réponse inexacte",
+                    "answeredCorrectly": "Réponse exacte",
+                    "answeredIncorrectly": "Mauvaise réponse",
+                    "solutionLabel": "Réponse correcte :",
+                    "inputLabel": "Blanc @num sur @total",
+                    "inputHasTipLabel": "Indice disponible",
+                    "tipLabel": "Indice",
+                    "behaviour": {
+                        "enableRetry": true,
+                        "enableSolutionsButton": true,
+                        "enableCheckButton": true,
+                        "autoCheck": false,
+                        "caseSensitive": true,
+                        "showSolutionsRequiresInput": true,
+                        "separateLines": false,
+                        "confirmCheckDialog": false,
+                        "confirmRetryDialog": false,
+                        "acceptSpellingErrors": false
+                    },
+                    "scoreBarLabel": "Vous avez obtenu :num points sur un total de :points",
+                    "a11yCheck": "Vérifiez les réponses. Les réponses seront marquées comme correctes, incorrectes ou sans réponse.",
+                    "a11yShowSolution": "Montrez la solution. La tâche sera marquée avec sa solution correcte.",
+                    "a11yRetry": "Réessayez la tâche. Réinitialisez toutes les réponses et recommencez la tâche.",
+                    "a11yCheckingModeHeader": "Mode de contrôle",
+                    "confirmCheck": {
+                        "header": "Terminer ?",
+                        "body": "Êtes-vous sûr de vouloir terminer ?",
+                        "cancelLabel": "Annuler",
+                        "confirmLabel": "Terminer"
+                    },
+                    "confirmRetry": {
+                        "header": "Recommencer ?",
+                        "body": "Êtes-vous sûr de vouloir recommencer ?",
+                        "cancelLabel": "Annuler",
+                        "confirmLabel": "Confirmer"
+                    },
+                    "questions": [
+                        "<p>H5P content may be edited using a *browser/web-browser:Something you use every day*.</p><p><strong>:</strong></p><p>H5P content may be edited using a *browser/web-browser:Something you use every day*.</p>",
+                        "<p><br>H5P content may be edited using a *browser/web-browser:Something you use every day*.</p>"
+                    ]
+                },
+                "library": "H5P.Blanks 1.14",
+                "metadata": {
+                    "contentType": "Fill in the Blanks",
+                    "license": "U",
+                    "title": "Fill in the Blanks",
+                    "authors": [],
+                    "changes": [],
+                    "extraTitle": "Fill in the Blanks"
+                },
+                "subContentId": "ea95920c-4c39-4be0-9294-312ffcf79f50"
+            },
+            "useSeparator": "auto"
+        },
+        {
+            "content": {
+                "params": {
+                    "media": {
+                        "type": {
+                            "params": {}
+                        },
+                        "disableImageZooming": false
+                    },
+                    "solution": {
+                        "introduction": "<div>You can optionally leave the students some explanations about your example. The explanation will only show up if you add an example, too.</div>",
+                        "sample": "<div><strong>Sample solution text</strong></div><div class=\"h5peditor-field-description\" style=\"-webkit-text-stroke-width:0px;background-color:rgb(252, 252, 252);color:rgb(67, 68, 70);font-family:&quot;Open Sans&quot;, sans-serif;font-size:12px;font-style:normal;font-variant-caps:normal;font-variant-ligatures:normal;font-weight:500;letter-spacing:0.5px;line-height:15px;margin-bottom:1em;margin-top:0.3em;orphans:2;text-align:start;text-decoration-color:initial;text-decoration-style:initial;text-decoration-thickness:initial;text-indent:0px;text-transform:none;white-space:normal;widows:2;word-spacing:0px;\" id=\"field-sample-301-description\">The student will see a \"Show solution\" button after submitting if you provide some text here.</div>"
+                    },
+                    "keywords": [
+                        {
+                            "options": {
+                                "points": 1,
+                                "occurrences": 1,
+                                "caseSensitive": true,
+                                "forgiveMistakes": false,
+                                "feedbackIncludedWord": "keyword",
+                                "feedbackMissedWord": "none"
+                            },
+                            "keyword": "submittingsubmitting"
+                        }
+                    ],
+                    "overallFeedback": [
+                        {
+                            "from": 0,
+                            "to": 100
+                        }
+                    ],
+                    "behaviour": {
+                        "inputFieldSize": "10",
+                        "enableRetry": true,
+                        "ignoreScoring": false,
+                        "pointsHost": 1,
+                        "linebreakReplacement": " "
+                    },
+                    "checkAnswer": "Vérifier",
+                    "submitAnswer": "Submit",
+                    "tryAgain": "Recommencer",
+                    "showSolution": "Montrer la solution",
+                    "feedbackHeader": "Feedback",
+                    "solutionTitle": "Exemple de solution",
+                    "remainingChars": "Il reste : @chars",
+                    "notEnoughChars": "Il faudrait introduire au moins @chars caractères !",
+                    "messageSave": "texte sauvegardé",
+                    "ariaYourResult": "You got @score out of @total points",
+                    "ariaNavigatedToSolution": "Navigated to newly included sample solution after textarea.",
+                    "ariaCheck": "Check the answers.",
+                    "ariaShowSolution": "Show the solution. You will be provided with a sample solution.",
+                    "ariaRetry": "Retry the task. You can improve your previous answer if the author allowed that.",
+                    "taskDescription": "<p><strong>Task description</strong></p><p>Describe your task here. The task description will appear above text input area.</p>"
+                },
+                "library": "H5P.Essay 1.5",
+                "metadata": {
+                    "contentType": "Essay",
+                    "license": "U",
+                    "title": "titre Essay",
+                    "authors": [],
+                    "changes": [],
+                    "extraTitle": "titre Essay"
+                },
+                "subContentId": "7907e4a7-9081-4a2e-a977-fe6162a00550"
+            },
+            "useSeparator": "auto"
+        },
+        {
+            "content": {
+                "params": {
+                    "media": {
+                        "params": {}
+                    },
+                    "solutionLabel": "Descriptive solution label\nClickable text area where the solution will be displayed.",
+                    "solutionText": "Solution text\nThe solution for the picture.",
+                    "taskDescription": "<p>Describe how the user should solve the task.</p>"
+                },
+                "library": "H5P.GuessTheAnswer 1.5",
+                "metadata": {
+                    "contentType": "Guess the Answer",
+                    "license": "U",
+                    "title": "Title",
+                    "authors": [],
+                    "changes": [],
+                    "extraTitle": "Title"
+                },
+                "subContentId": "43070b13-a9c2-4f82-b1d0-1f8878d5d82e"
+            },
+            "useSeparator": "auto"
+        },
+        {
+            "content": {
+                "params": {
+                    "media": {
+                        "type": {
+                            "params": {}
+                        },
+                        "disableImageZooming": false
+                    },
+                    "overallFeedback": [
+                        {
+                            "from": 0,
+                            "to": 100
+                        }
+                    ],
+                    "checkAnswerButton": "Vérifier",
+                    "submitAnswerButton": "Vérifier",
+                    "tryAgainButton": "Recommencer",
+                    "showSolutionButton": "Voir la correction",
+                    "behaviour": {
+                        "enableRetry": true,
+                        "enableSolutionsButton": true,
+                        "enableCheckButton": true,
+                        "showScorePoints": true
+                    },
+                    "correctAnswer": "Réponse correcte !",
+                    "incorrectAnswer": "Réponse incorrecte !",
+                    "missedAnswer": "Absence de réponse !",
+                    "displaySolutionDescription": "L&#039;activité a été mise à jour pour afficher la solution.",
+                    "scoreBarLabel": "Vous avez :num points sur un total de :total",
+                    "a11yFullTextLabel": "Full readable text",
+                    "a11yClickableTextLabel": "Full text where words can be marked",
+                    "a11ySolutionModeHeader": "Solution mode",
+                    "a11yCheckingHeader": "Checking mode",
+                    "a11yCheck": "Check the answers. The responses will be marked as correct, incorrect, or unanswered.",
+                    "a11yShowSolution": "Afficher la solution. La tâche sera notée avec sa solution correcte.",
+                    "a11yRetry": "Réessayer la tâche. Réinitialiser toutes les réponses et recommencer la tâche.",
+                    "taskDescription": "<p><strong>Task descriptionTask descriptionTask description</strong></p>",
+                    "textField": "<p>The correct words are marked like this: *correctword*, an asterisk is written like this: *correctword***.</p>"
+                },
+                "library": "H5P.MarkTheWords 1.11",
+                "metadata": {
+                    "contentType": "Mark the Words",
+                    "license": "U",
+                    "title": "Title Mark the Words",
+                    "authors": [],
+                    "changes": [],
+                    "extraTitle": "Title Mark the Words"
+                },
+                "subContentId": "31f27b3a-aea3-4374-8cb4-5ab550c3f641"
+            },
+            "useSeparator": "auto"
+        },
+        {
+            "content": {
+                "params": {
+                    "media": {
+                        "type": {
+                            "params": {}
+                        },
+                        "disableImageZooming": false
+                    },
+                    "answers": [
+                        {
+                            "correct": true,
+                            "tipsAndFeedback": {
+                                "tip": "<p><strong>Tip text</strong></p>",
+                                "chosenFeedback": "<div><strong>Message displayed if answer is selected</strong></div>",
+                                "notChosenFeedback": ""
+                            },
+                            "text": "<div>Good answer</div>"
+                        },
+                        {
+                            "correct": false,
+                            "tipsAndFeedback": {
+                                "tip": "",
+                                "chosenFeedback": "",
+                                "notChosenFeedback": ""
+                            },
+                            "text": "<div><strong>Text</strong></div>"
+                        },
+                        {
+                            "correct": false,
+                            "tipsAndFeedback": {
+                                "tip": "",
+                                "chosenFeedback": "",
+                                "notChosenFeedback": ""
+                            },
+                            "text": "<div><strong>TextText</strong></div>"
+                        },
+                        {
+                            "correct": false,
+                            "tipsAndFeedback": {
+                                "tip": "",
+                                "chosenFeedback": "",
+                                "notChosenFeedback": ""
+                            },
+                            "text": "<div><strong>TextTextTextTextTextText</strong></div>"
+                        }
+                    ],
+                    "overallFeedback": [
+                        {
+                            "from": 0,
+                            "to": 100
+                        }
+                    ],
+                    "behaviour": {
+                        "enableRetry": true,
+                        "enableSolutionsButton": true,
+                        "enableCheckButton": true,
+                        "type": "auto",
+                        "singlePoint": false,
+                        "randomAnswers": true,
+                        "showSolutionsRequiresInput": true,
+                        "confirmCheckDialog": false,
+                        "confirmRetryDialog": false,
+                        "autoCheck": false,
+                        "passPercentage": 100,
+                        "showScorePoints": true
+                    },
+                    "UI": {
+                        "checkAnswerButton": "Vérifier",
+                        "submitAnswerButton": "Envoyer",
+                        "showSolutionButton": "Afficher la solution",
+                        "tryAgainButton": "Recommencer",
+                        "tipsLabel": "Afficher les indices",
+                        "scoreBarLabel": "You got :num out of :total points",
+                        "tipAvailable": "Indice disponible",
+                        "feedbackAvailable": "Retour disponible",
+                        "readFeedback": "Lire le commentaire",
+                        "wrongAnswer": "Mauvaise réponse",
+                        "correctAnswer": "Bonne réponse",
+                        "shouldCheck": "Il fallait cocher ici",
+                        "shouldNotCheck": "Il ne fallait pas cocher ici !",
+                        "noInput": "Veuillez répondre avant de consulter la solution",
+                        "a11yCheck": "Vérifiez les réponses. Les réponses seront marquées comme correctes, incorrectes ou sans réponse.",
+                        "a11yShowSolution": "Montrez la solution. La tâche sera marquée avec sa solution correcte.",
+                        "a11yRetry": "Réessayer la tâche. Réinitialiser toutes les réponses et recommencer la tâche."
+                    },
+                    "confirmCheck": {
+                        "header": "Terminer ?",
+                        "body": "Êtes-vous certain de vouloir terminer ?",
+                        "cancelLabel": "Annuler",
+                        "confirmLabel": "Terminer"
+                    },
+                    "confirmRetry": {
+                        "header": "Recommencer ?",
+                        "body": "Êtes-vous certain de vouloir recommencer ?",
+                        "cancelLabel": "Annuler",
+                        "confirmLabel": "Confirmer"
+                    },
+                    "question": "<p><strong>Question</strong></p>"
+                },
+                "library": "H5P.MultiChoice 1.16",
+                "metadata": {
+                    "contentType": "Multiple Choice",
+                    "license": "U",
+                    "title": "Sans titre Multiple Choice",
+                    "authors": [],
+                    "changes": [],
+                    "extraTitle": "Sans titre Multiple Choice"
+                },
+                "subContentId": "9c8af0f2-5570-4330-ba43-6f905ce1c126"
+            },
+            "useSeparator": "auto"
+        },
+        {
+            "content": {
+                "params": {
+                    "choices": [
+                        {
+                            "subContentId": "a850cede-7b81-4a63-badd-ea8ba89706d2",
+                            "question": "<p>1+4</p>",
+                            "answers": [
+                                "<p>5</p>",
+                                "<p>56</p>",
+                                "<p>4</p>"
+                            ]
+                        },
+                        {
+                            "subContentId": "0493c203-0165-4d08-9c62-927259209479",
+                            "question": "<p>1+6</p>",
+                            "answers": [
+                                "<p>7</p>",
+                                "<p>8</p>"
+                            ]
+                        },
+                        {
+                            "subContentId": "28cd54c5-ec92-41a7-8da7-258f7bb481a4",
+                            "question": "<p>1+9</p>",
+                            "answers": [
+                                "<p>10</p>",
+                                "<p>11</p>"
+                            ]
+                        }
+                    ],
+                    "overallFeedback": [
+                        {
+                            "from": 0,
+                            "to": 100
+                        }
+                    ],
+                    "behaviour": {
+                        "autoContinue": true,
+                        "timeoutCorrect": 2000,
+                        "timeoutWrong": 3000,
+                        "soundEffectsEnabled": true,
+                        "enableRetry": true,
+                        "enableSolutionsButton": true,
+                        "passPercentage": 100
+                    },
+                    "l10n": {
+                        "nextButtonLabel": "Question suivante",
+                        "showSolutionButtonLabel": "Voir la solution",
+                        "retryButtonLabel": "Correction",
+                        "solutionViewTitle": "Recommencer",
+                        "correctText": "Correct !",
+                        "incorrectText": "Incorrect !",
+                        "shouldSelect": "Should have been selected",
+                        "shouldNotSelect": "Should not have been selected",
+                        "muteButtonLabel": "Couper les retours sons",
+                        "closeButtonLabel": "Fermer",
+                        "slideOfTotal": "Diapositive :num sur :total",
+                        "scoreBarLabel": "Vous avez :num points sur un total de :total",
+                        "solutionListQuestionNumber": "Question :num",
+                        "a11yShowSolution": "Show the solution. The task will be marked with its correct solution.",
+                        "a11yRetry": "Retry the task. Reset all responses and start the task over again."
+                    }
+                },
+                "library": "H5P.SingleChoiceSet 1.11",
+                "metadata": {
+                    "contentType": "Single Choice Set",
+                    "license": "U",
+                    "title": "Sans titre Single Choice Set",
+                    "authors": [],
+                    "changes": [],
+                    "extraTitle": "Sans titre Single Choice Set"
+                },
+                "subContentId": "66039404-618c-4693-bd33-50f400e8ab98"
+            },
+            "useSeparator": "auto"
+        },
+        {
+            "content": {
+                "params": {
+                    "intro": "<p>&nbsp;titre Summary titre Summary titre SummaryChoose the correct statement.</p>",
+                    "summaries": [
+                        {
+                            "subContentId": "cd02ecb7-530c-4661-a8e4-b24ef9e27995",
+                            "summary": [
+                                "<p>List of statements for the summary - the first statement is correct.</p>",
+                                "<p>List of statements for the summary - the first statement is correct.List of statements for the summary - the first statement is correct.List of statements for the summary - the first statement is correct.</p>",
+                                "<p>List of statements for the summary - the first statement is correct.List of statements for the summary - the first statement is correct.List of statements for the summary - the first statement is correct.List of statements for the summary - the first statement is correct.List of statements for the summary - the first statement is correct.</p>"
+                            ],
+                            "tip": ""
+                        },
+                        {
+                            "subContentId": "27227bc1-c7ea-4a94-b28e-543dd735bbec",
+                            "summary": [
+                                "<p>List of statements for the summary - the first statement is correct.List of statements for the summary - the first statement is correct.</p>",
+                                "<p>List of statements for the summary - the first statement is correct.List of statements for the summary - the first statement is correct.List of statements for the summary - the first statement is correct.</p>"
+                            ],
+                            "tip": ""
+                        }
+                    ],
+                    "overallFeedback": [
+                        {
+                            "from": 0,
+                            "to": 100
+                        }
+                    ],
+                    "solvedLabel": "Progression :",
+                    "scoreLabel": "Erreurs :",
+                    "resultLabel": "Votre résultat :",
+                    "labelCorrect": "Correct.",
+                    "labelIncorrect": "Incorrect! Please try again.",
+                    "alternativeIncorrectLabel": "Incorrect",
+                    "labelCorrectAnswers": "Réponses correctes.",
+                    "tipButtonLabel": "Montrer l&#039;indice",
+                    "scoreBarLabel": "Vous avez :num points sur un total de :total",
+                    "progressText": "Progression de :num sur :total"
+                },
+                "library": "H5P.Summary 1.10",
+                "metadata": {
+                    "contentType": "Summary",
+                    "license": "U",
+                    "title": "titre Summary",
+                    "authors": [],
+                    "changes": [],
+                    "extraTitle": "titre Summary"
+                },
+                "subContentId": "e29c1305-1118-49dc-a7fa-02f32a63fc5c"
+            },
+            "useSeparator": "auto"
+        },
+        {
+            "content": {
+                "params": {
+                    "timeline": {
+                        "defaultZoomLevel": "0",
+                        "height": 600,
+                        "asset": {},
+                        "date": [
+                            {
+                                "asset": {},
+                                "startDate": "2025,12,12",
+                                "endDate": "2026,12,12",
+                                "headline": "Headline for the date entry",
+                                "tag": "Tags Tags",
+                                "text": "<p><br>Body for the date entry</p>"
+                            },
+                            {
+                                "asset": {},
+                                "startDate": "2022,12,12",
+                                "endDate": "2024,12,12",
+                                "headline": "Headline for the date entry",
+                                "tag": "Body text",
+                                "text": "<p><strong>Body text</strong></p>"
+                            }
+                        ],
+                        "language": "fr",
+                        "headline": "Headline",
+                        "text": "<div><strong>Body Text</strong></div>"
+                    }
+                },
+                "library": "H5P.Timeline 1.1",
+                "metadata": {
+                    "contentType": "Timeline",
+                    "license": "U",
+                    "title": "Sans titre Timeline",
+                    "authors": [],
+                    "changes": [],
+                    "extraTitle": "Sans titre Timeline"
+                },
+                "subContentId": "8a6de4b8-be54-40dc-9291-12aff5051a75"
+            },
+            "useSeparator": "auto"
+        },
+        {
+            "content": {
+                "params": {
+                    "media": {
+                        "type": {
+                            "params": {}
+                        },
+                        "disableImageZooming": false
+                    },
+                    "correct": "true",
+                    "behaviour": {
+                        "enableRetry": true,
+                        "enableSolutionsButton": true,
+                        "enableCheckButton": true,
+                        "confirmCheckDialog": false,
+                        "confirmRetryDialog": false,
+                        "autoCheck": false
+                    },
+                    "l10n": {
+                        "trueText": "True",
+                        "falseText": "False",
+                        "score": "You got @score of @total points",
+                        "checkAnswer": "Check",
+                        "submitAnswer": "Submit",
+                        "showSolutionButton": "Show solution",
+                        "tryAgain": "Retry",
+                        "wrongAnswerMessage": "Wrong answer",
+                        "correctAnswerMessage": "Correct answer",
+                        "scoreBarLabel": "You got :num out of :total points",
+                        "a11yCheck": "Check the answers. The responses will be marked as correct, incorrect, or unanswered.",
+                        "a11yShowSolution": "Show the solution. The task will be marked with its correct solution.",
+                        "a11yRetry": "Retry the task. Reset all responses and start the task over again."
+                    },
+                    "confirmCheck": {
+                        "header": "Finish ?",
+                        "body": "Are you sure you wish to finish ?",
+                        "cancelLabel": "Cancel",
+                        "confirmLabel": "Finish"
+                    },
+                    "confirmRetry": {
+                        "header": "Retry ?",
+                        "body": "Are you sure you wish to retry ?",
+                        "cancelLabel": "Cancel",
+                        "confirmLabel": "Confirm"
+                    },
+                    "question": "<p>Sans titre True/False Question ?</p>"
+                },
+                "library": "H5P.TrueFalse 1.8",
+                "metadata": {
+                    "contentType": "True/False Question",
+                    "license": "U",
+                    "title": "Sans titre True/False Question",
+                    "authors": [],
+                    "changes": [],
+                    "extraTitle": "Sans titre True/False Question"
+                },
+                "subContentId": "8d9be8de-abde-4abe-9625-8bdca16832c3"
+            },
+            "useSeparator": "auto"
+        },
+        {
+            "content": {
+                "params": {
+                    "l10n": {
+                        "recordAnswer": "Record",
+                        "pause": "Pause",
+                        "continue": "Continue",
+                        "download": "Download",
+                        "done": "Done",
+                        "retry": "Retry",
+                        "microphoneNotSupported": "Microphone not supported. Make sure you are using a browser that allows microphone recording.",
+                        "microphoneInaccessible": "Microphone is not accessible. Make sure that the browser microphone is enabled.",
+                        "insecureNotAllowed": "Access to microphone is not allowed in your browser since this page is not served using HTTPS. Please contact the author, and ask him to make this available using HTTPS",
+                        "statusReadyToRecord": "Press a button below to record your answer.",
+                        "statusRecording": "Recording...",
+                        "statusPaused": "Recording paused. Press a button to continue recording.",
+                        "statusFinishedRecording": "You have successfully recorded your answer! Listen to the recording below.",
+                        "downloadRecording": "Download this recording or retry.",
+                        "retryDialogHeaderText": "Retry recording?",
+                        "retryDialogBodyText": "By pressing \"Retry\" you will lose your current recording.",
+                        "retryDialogConfirmText": "Retry",
+                        "retryDialogCancelText": "Cancel",
+                        "statusCantCreateTheAudioFile": "Can't create the audio file."
+                    },
+                    "title": "Utilisé pour la recherche, les rapports et les informations de copyrightUtilisé pour la recherche, les rapports et les informations de copyrightUtilisé pour la recherche, les rapports et les informations de copyright"
+                },
+                "library": "H5P.AudioRecorder 1.0",
+                "metadata": {
+                    "contentType": "Audio Recorder",
+                    "license": "U",
+                    "title": "Sans titre Audio Recorder",
+                    "authors": [],
+                    "changes": [],
+                    "extraTitle": "Sans titre Audio Recorder"
+                },
+                "subContentId": "328ca5a1-3a38-418e-9e67-df31a22febd2"
+            },
+            "useSeparator": "auto"
+        }
+    ]
+}

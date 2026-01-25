@@ -26,40 +26,32 @@ router.post('/', async (req, res) => {
         }
 
         const MODULE_GROUPS = {
-            "CHOICE": [
+            "REMEMBER": [
+                { type: "h5p", library: "H5P.Dialogcards 1.9" },
+                { type: "h5p", library: "H5P.SingleChoiceSet 1.11" },
+                { type: "h5p", library: "H5P.DragText 1.10" },
+                { type: "h5p", library: "H5P.Timeline 1.1" },
+                { type: "h5p", library: "H5P.TrueFalse 1.8" }
+            ],
+            "UNDERSTAND": [
+                // "Créer un cours revealjs" -> Implicitly handled as a specific module type or IFrame
+                // For now, let's use a placeholder for Course/Slide
+                { type: "revealjs", module: "CoursePresentation" }
+            ],
+            "APPLY": [
+                { type: "h5p", library: "H5P.Blanks 1.14" },
                 { type: "h5p", library: "H5P.MultiChoice 1.16" },
-                { type: "h5p", library: "H5P.TrueFalse 1.8" },
+                { type: "h5p", library: "H5P.Summary 1.10" },
+                { type: "h5p", library: "H5P.SpeakTheWordsSet 1.3" },
+                { type: "learningapps", module: "Pairmatching" },
+                { type: "learningapps", module: "TimelineAxis" },
+                { type: "learningapps", module: "Grouping" },
+                { type: "learningapps", module: "WriteAnswerCards" },
                 { type: "learningapps", module: "Qcm" }
             ],
-            "BLANKS": [
-                { type: "h5p", library: "H5P.Blanks 1.12" },
-                { type: "learningapps", module: "FillTable" },
-                { type: "learningapps", module: "TextInputQuiz" }
-            ],
-            "MATCHING": [
-                { type: "h5p", library: "H5P.DragQuestion 1.14" },
-                { type: "learningapps", module: "Pairmatching" },
-                { type: "learningapps", module: "Grouping" },
-                { type: "learningapps", module: "SortingPuzzle" }
-            ],
-            "ORDERING": [
-                { type: "h5p", library: "H5P.SortParagraphs 1.3" },
-                { type: "h5p", library: "H5P.Timeline 1.1" },
-                { type: "learningapps", module: "Ordering" },
-                { type: "learningapps", module: "TimelineAxis" }
-            ],
-            "MEMORY_CARDS": [
-                { type: "h5p", library: "H5P.Flashcards 1.5" },
-                { type: "h5p", library: "H5P.MemoryGame 1.3" },
-                { type: "h5p", library: "H5P.Dialogcards 1.9" },
-                { type: "learningapps", module: "WriteAnswerCards" }
-            ],
-            "WRITING": [
-                { type: "h5p", library: "H5P.Essay 1.5" }
-            ],
-            "GAMES": [
-                { type: "learningapps", module: "Hangman" },
-                { type: "h5p", library: "H5P.GuessTheAnswer 1.5" }
+            "ANALYZE": [
+                { type: "h5p", library: "H5P.SortParagraphs 1.3" }, // Good for analysis/order
+                { type: "learningapps", module: "Ordering" } // Good for analysis
             ]
         };
 
@@ -141,6 +133,8 @@ router.post('/', async (req, res) => {
             // Iterate through sub-chapters, then Bloom levels, then modules
             for (const subChapter of result.sub_chapters || []) {
                 console.log(`Processing Sub-Chapter: ${subChapter.title}`);
+                const subChapterRequests = []; // Accumulate requests for this sub-chapter
+
                 for (const level of subChapter.bloom_taxonomy || []) {
                     console.log(`  Processing Bloom Level ${level.level}: ${level.name}`);
                     for (const moduleObj of level.modules || []) {
@@ -150,90 +144,67 @@ router.post('/', async (req, res) => {
 
                         // Pick a random implementation from the group for variety
                         const selection = groupOptions[Math.floor(Math.random() * groupOptions.length)];
-                        moduleObj.type = selection.type;
-                        if (selection.type === 'h5p') moduleObj.library = selection.library;
-                        if (selection.type === 'learningapps') moduleObj.module = selection.module;
 
-                        // Use objective as prompt if prompt is missing
+                        // We only support 'h5p' types for the Template approach effectively right now
+                        // If it's learningapps, we might skip or try to iframe it? 
+                        // For now, let's prioritize H5P types if possible or fallback.
+                        // The template engine handles H5P types.
+
+                        // Prepare the request for the Template Engine
+                        // We need to map the 'selection.library' (e.g. H5P.MultiChoice 1.16) to the engine's expected 'type'
+                        // The engine handles fuzzy matching, so 'MultiChoice' is fine.
+
+                        let typeKey = selection.library || selection.module;
+                        // specific fix for commonly used keys
+                        if (groupName === 'CHOICE') typeKey = 'MultiChoice';
+                        if (groupName === 'BLANKS') typeKey = 'Blanks';
+                        if (groupName === 'WRITING') typeKey = 'Essay';
+                        if (groupName === 'MEMORY_CARDS') typeKey = 'Dialogcards';
+
                         const generationPrompt = moduleObj.prompt || moduleObj.objective;
-                        // Use objective as title if title is missing (first 50 chars)
-                        if (!moduleObj.title) {
-                            moduleObj.title = moduleObj.objective.length > 50
-                                ? moduleObj.objective.substring(0, 47) + '...'
-                                : moduleObj.objective;
-                        }
+                    });
 
-                        console.log(`    Generating module: ${moduleObj.title} (Group: ${groupName} -> ${moduleObj.module || moduleObj.library})`);
-                        if (moduleObj.type === 'h5p') {
-                            try {
-                                const libraryName = moduleObj.library || "H5P.MultiChoice 1.16";
-                                const h5pResult = await h5pGenerator.generateAI(openai, libraryName, generationPrompt, moduleObj.count || 1);
-                                if (h5pResult.success && h5pResult.results.length > 0) {
-                                    const genId = h5pResult.results[0].id;
-                                    const genUrl = h5pResult.results[0].url;
+if (laResponse.data.success && laResponse.data.results && laResponse.data.results.length > 0) {
+    const laResult = laResponse.data.results[0];
+    const genId = laResult.appId;
+    const genUrl = `https://learningapps.org/watch?v=${genId}`;
 
-                                    moduleObj.id = genId;
-                                    moduleObj.url = genUrl;
+    moduleObj.id = genId;
+    moduleObj.url = genUrl;
 
-                                    generatedModules.push({
-                                        type: 'h5p',
-                                        id: genId,
-                                        title: moduleObj.title
-                                    });
-                                }
+    generatedModules.push({
+        type: 'learningapps',
+        id: genId,
+        title: moduleObj.title
+    });
+}
                             } catch (e) {
-                                console.error(`Error generating H5P module ${moduleObj.title}:`, e);
-                            }
-                        } else if (moduleObj.type === 'learningapps') {
-                            try {
-                                const laBaseUrl = process.env.LEARNINGAPPS_API_URL || 'http://localhost:3001';
-                                const laResponse = await axios.post(`${laBaseUrl}/api/content/learningapps/ai`, {
-                                    module: moduleObj.module,
-                                    topic: generationPrompt,
-                                    count: moduleObj.count || 1
-                                });
-
-                                if (laResponse.data.success && laResponse.data.results && laResponse.data.results.length > 0) {
-                                    const laResult = laResponse.data.results[0];
-                                    const genId = laResult.appId;
-                                    const genUrl = `https://learningapps.org/watch?v=${genId}`;
-
-                                    moduleObj.id = genId;
-                                    moduleObj.url = genUrl;
-
-                                    generatedModules.push({
-                                        type: 'learningapps',
-                                        id: genId,
-                                        title: moduleObj.title
-                                    });
-                                }
-                            } catch (e) {
-                                console.error(`Error generating LearningApps module ${moduleObj.title}:`, e);
-                            }
+    console.error(`Error generating LearningApps module ${moduleObj.title}:`, e);
+}
                         }
                     }
                 }
             }
 
-            if (generatedModules.length > 0) {
-                // Generate Parcours (Interactive Book)
-                const baseUrl = `${req.protocol}://${req.get('host')}`;
-                const bookResult = await h5pGenerator.generateInteractiveBook(generatedModules, baseUrl, result.subject || result.title);
+if (generatedModules.length > 0) {
+    // Generate Parcours (Interactive Book)
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const bookResult = await h5pGenerator.generateInteractiveBook(generatedModules, baseUrl, result.subject || result.title);
 
-                result.parcours = {
-                    id: bookResult.id,
-                    url: bookResult.url,
-                    type: 'interactivebook',
-                    modules: generatedModules
-                };
-            }
+    result.parcours = {
+        id: bookResult.id,
+        url: bookResult.url,
+        type: 'interactivebook',
+        modules: generatedModules
+    };
+}
         }
 
-        res.json(result);
+res.json(result);
     } catch (err) {
-        console.error('Planning Error:', err);
-        res.status(500).json({ error: err.message });
-    }
+    console.error('Planning Error:', err);
+    res.status(500).json({ error: err.message });
+}
 });
 
 module.exports = router;

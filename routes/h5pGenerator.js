@@ -293,105 +293,123 @@ class H5PGenerator {
         return { success: true, count: results.length, results, url: results[0]?.url };
     }
 
+const { H5PTemplateEngine } = require('./h5pTemplateEngine');
+
+    async generateFromTemplate(requests, title) {
+    const engine = new H5PTemplateEngine();
+    await engine.loadMasterTemplate();
+
+    // Generate the H5P.Column content JSON (which contains the sub-modules)
+    const columnParams = await engine.generateContent(requests);
+
+    // Ensure metadata title is set
+    if (!columnParams.metadata) columnParams.metadata = {};
+    columnParams.metadata.title = title;
+
+    // Use the existing generate method to package it standardly
+    // The main library is H5P.Column 1.18 (as per template)
+    return this.generate('H5P.Column 1.18', columnParams);
+}
+
     async generateInteractiveBook(modules, baseUrl = '', title = '') {
-        const chapters = [];
-        const supportedLibraries = [
-            'H5P.Accordion', 'H5P.Agamotto', 'H5P.Audio', 'H5P.Blanks', 'H5P.Chart', 'H5P.Collage',
-            'H5P.CoursePresentation', 'H5P.Dialogcards', 'H5P.DocumentationTool', 'H5P.DragQuestion',
-            'H5P.DragText', 'H5P.Essay', 'H5P.GuessTheAnswer', 'H5P.Table', 'H5P.IFrameEmbed',
-            'H5P.Image', 'H5P.ImageHotspots', 'H5P.ImageHotspotQuestion', 'H5P.ImageSlider',
-            'H5P.InteractiveVideo', 'H5P.Link', 'H5P.MarkTheWords', 'H5P.MemoryGame',
-            'H5P.MultiChoice', 'H5P.Questionnaire', 'H5P.QuestionSet', 'H5P.SingleChoiceSet',
-            'H5P.Summary', 'H5P.Timeline', 'H5P.TrueFalse', 'H5P.Video'
-        ];
+    const chapters = [];
+    const supportedLibraries = [
+        'H5P.Accordion', 'H5P.Agamotto', 'H5P.Audio', 'H5P.Blanks', 'H5P.Chart', 'H5P.Collage',
+        'H5P.CoursePresentation', 'H5P.Dialogcards', 'H5P.DocumentationTool', 'H5P.DragQuestion',
+        'H5P.DragText', 'H5P.Essay', 'H5P.GuessTheAnswer', 'H5P.Table', 'H5P.IFrameEmbed',
+        'H5P.Image', 'H5P.ImageHotspots', 'H5P.ImageHotspotQuestion', 'H5P.ImageSlider',
+        'H5P.InteractiveVideo', 'H5P.Link', 'H5P.MarkTheWords', 'H5P.MemoryGame',
+        'H5P.MultiChoice', 'H5P.Questionnaire', 'H5P.QuestionSet', 'H5P.SingleChoiceSet',
+        'H5P.Summary', 'H5P.Timeline', 'H5P.TrueFalse', 'H5P.Video'
+    ];
 
-        const laTypeMap = {
-            'Qcm': 'QCM',
-            'Fillblanks': 'Texte à trous',
-            'Grouping': 'Regroupement',
-            'Hangman': 'Pendu',
-            'HorseRace': 'Course de chevaux',
-            'Millionaire': 'Qui veut gagner des millions',
-            'Ordering': 'Classement',
-            'Pairmatching': 'Paires',
-            'WriteAnswerCards': 'Cartes éclairs',
-            'TextInputQuiz': 'Quiz texte'
-        };
+    const laTypeMap = {
+        'Qcm': 'QCM',
+        'Fillblanks': 'Texte à trous',
+        'Grouping': 'Regroupement',
+        'Hangman': 'Pendu',
+        'HorseRace': 'Course de chevaux',
+        'Millionaire': 'Qui veut gagner des millions',
+        'Ordering': 'Classement',
+        'Pairmatching': 'Paires',
+        'WriteAnswerCards': 'Cartes éclairs',
+        'TextInputQuiz': 'Quiz texte'
+    };
 
-        for (const module of modules) {
-            let chapterContent = null;
-            let displayTitle = module.title || '';
+    for (const module of modules) {
+        let chapterContent = null;
+        let displayTitle = module.title || '';
 
-            if (module.type === 'h5p') {
-                try {
-                    const contentDir = path.join(H5P_CONTENT_DIR, module.id);
-                    if (await fs.pathExists(path.join(contentDir, 'h5p.json'))) {
-                        const h5pJson = await fs.readJson(path.join(contentDir, 'h5p.json'));
-                        const contentJson = await fs.readJson(path.join(contentDir, 'content.json'));
-                        const mainLib = h5pJson.mainLibrary;
-                        const libShort = mainLib.replace('H5P.', '');
+        if (module.type === 'h5p') {
+            try {
+                const contentDir = path.join(H5P_CONTENT_DIR, module.id);
+                if (await fs.pathExists(path.join(contentDir, 'h5p.json'))) {
+                    const h5pJson = await fs.readJson(path.join(contentDir, 'h5p.json'));
+                    const contentJson = await fs.readJson(path.join(contentDir, 'content.json'));
+                    const mainLib = h5pJson.mainLibrary;
+                    const libShort = mainLib.replace('H5P.', '');
 
-                        displayTitle = module.title || h5pJson.title || `H5P ${libShort}`;
+                    displayTitle = module.title || h5pJson.title || `H5P ${libShort}`;
 
-                        if (supportedLibraries.includes(mainLib)) {
-                            chapterContent = {
-                                library: `${mainLib} ${h5pJson.preloadedDependencies.find(d => d.machineName === mainLib).majorVersion}.${h5pJson.preloadedDependencies.find(d => d.machineName === mainLib).minorVersion}`,
-                                params: contentJson,
-                                metadata: { title: displayTitle }
-                            };
-                        } else {
-                            const baseUrl = process.env.H5P_LINK || process.env.H5P_BASE_URL || 'http://localhost:8080';
-                            chapterContent = {
-                                library: 'H5P.IFrameEmbed 1.0',
-                                params: { source: `${baseUrl}/view/unknown/${module.id}`, width: "100%", height: "800px", resizeSupported: false },
-                                metadata: { title: displayTitle }
-                            };
-                        }
+                    if (supportedLibraries.includes(mainLib)) {
+                        chapterContent = {
+                            library: `${mainLib} ${h5pJson.preloadedDependencies.find(d => d.machineName === mainLib).majorVersion}.${h5pJson.preloadedDependencies.find(d => d.machineName === mainLib).minorVersion}`,
+                            params: contentJson,
+                            metadata: { title: displayTitle }
+                        };
+                    } else {
+                        const baseUrl = process.env.H5P_LINK || process.env.H5P_BASE_URL || 'http://localhost:8080';
+                        chapterContent = {
+                            library: 'H5P.IFrameEmbed 1.0',
+                            params: { source: `${baseUrl}/view/unknown/${module.id}`, width: "100%", height: "800px", resizeSupported: false },
+                            metadata: { title: displayTitle }
+                        };
                     }
-                } catch (e) {
-                    console.error(`Error processing H5P module ${module.id}:`, e);
                 }
-            } else if (module.type === 'learningapps') {
-                const laName = laTypeMap[module.id] || module.id || 'Activité';
-                displayTitle = module.title || laName;
-                chapterContent = {
-                    library: 'H5P.IFrameEmbed 1.0',
-                    params: { source: `https://learningapps.org/watch?v=${module.id}`, width: "100%", height: "800px", resizeSupported: false },
-                    metadata: { title: displayTitle }
-                };
-            } else if (module.type === 'revealjs' || module.type === 'course') {
-                displayTitle = "Cours Interactif";
-                const revealUrl = module.id.startsWith('http') ? module.id : `${baseUrl}/course/view/${module.id}`;
-                chapterContent = {
-                    library: 'H5P.IFrameEmbed 1.0',
-                    params: { source: revealUrl, width: "100%", height: "800px", resizeSupported: false },
-                    metadata: { title: displayTitle }
-                };
+            } catch (e) {
+                console.error(`Error processing H5P module ${module.id}:`, e);
             }
-
-            if (chapterContent) {
-                chapters.push({
-                    library: 'H5P.Column 1.18',
-                    params: {
-                        content: [{
-                            content: chapterContent,
-                            useSeparator: 'auto',
-                            subContentId: `col-item-${module.id}`.replace(/[^a-z0-9]/gi, '-')
-                        }]
-                    },
-                    subContentId: `chapter-${module.id}`.replace(/[^a-z0-9]/gi, '-'),
-                    metadata: { title: displayTitle }
-                });
-            }
+        } else if (module.type === 'learningapps') {
+            const laName = laTypeMap[module.id] || module.id || 'Activité';
+            displayTitle = module.title || laName;
+            chapterContent = {
+                library: 'H5P.IFrameEmbed 1.0',
+                params: { source: `https://learningapps.org/watch?v=${module.id}`, width: "100%", height: "800px", resizeSupported: false },
+                metadata: { title: displayTitle }
+            };
+        } else if (module.type === 'revealjs' || module.type === 'course') {
+            displayTitle = "Cours Interactif";
+            const revealUrl = module.id.startsWith('http') ? module.id : `${baseUrl}/course/view/${module.id}`;
+            chapterContent = {
+                library: 'H5P.IFrameEmbed 1.0',
+                params: { source: revealUrl, width: "100%", height: "800px", resizeSupported: false },
+                metadata: { title: displayTitle }
+            };
         }
 
-        const bookParams = {
-            chapters,
-            behaviour: { defaultTableOfContents: true, progressIndicators: true, displaySummary: true },
-            metadata: { title: title || "Parcours d'apprentissage" }
-        };
-        return this.generate('H5P.InteractiveBook 1.11', bookParams);
+        if (chapterContent) {
+            chapters.push({
+                library: 'H5P.Column 1.18',
+                params: {
+                    content: [{
+                        content: chapterContent,
+                        useSeparator: 'auto',
+                        subContentId: `col-item-${module.id}`.replace(/[^a-z0-9]/gi, '-')
+                    }]
+                },
+                subContentId: `chapter-${module.id}`.replace(/[^a-z0-9]/gi, '-'),
+                metadata: { title: displayTitle }
+            });
+        }
     }
+
+    const bookParams = {
+        chapters,
+        behaviour: { defaultTableOfContents: true, progressIndicators: true, displaySummary: true },
+        metadata: { title: title || "Parcours d'apprentissage" }
+    };
+    return this.generate('H5P.InteractiveBook 1.11', bookParams);
+}
 }
 
 module.exports = { H5PGenerator };

@@ -194,9 +194,49 @@ http://localhost:3000/parcours?modules=learningapps:p2i7qp7k325,h5p:176575443788
 - **LearningApps**: Embeds LearningApps content using the official viewer.
 - **Mobile Friendly**: Full-screen responsive design.
 
+## 6. Planning & Revision Path
+
+**Endpoint**: `POST /planning`
+
+Generates a complete educational path based on Bloom's Taxonomy, delivered as a single **H5P Interactive Book**.
+
+**Body Parameters**:
+- `request` (string): The topic/subject (e.g., "La Révolution Française").
+- `type` (string): The type of path to generate.
+    - `revision`: (Default) Levels 1, 2, 3 (Remember, Understand, Apply).
+    - `course`: Levels 1, 2 (Remember, Understand) - Good for introductions.
+    - `exercises`: Levels 1, 3, 4+ (Remember, Apply, Analyze) - Intensive practice.
+- `subject` (string, optional): The subject matter.
+- `chapter` (string, optional): Context chapter.
+
+**Example**:
+```bash
+curl -X POST http://localhost:3000/planning \
+-H "Content-Type: application/json" \
+-d '{
+    "request": "Les fractions",
+    "type": "revision",
+    "subject": "Mathématiques"
+}'
+```
+
+**Response**:
+Returns a JSON object describing the path and containing the generated H5P Interactive Book URL.
+```json
+{
+  "subject": "Mathématiques",
+  "notions": [ ... ],
+  "parcours": {
+    "id": "172...",
+    "url": "/content/172.../interactive-book-file.h5p",
+    "type": "interactivebook"
+  }
+}
+```
+
 ## GeoGebra Image Generation Service
 
-An internal service is available to generate images from GeoGebra commands using Playwright.
+An internal service is available to generate images from GeoGebra commands using Playwright...
 
 ### Usage
 
