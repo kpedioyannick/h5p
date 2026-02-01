@@ -344,10 +344,23 @@ const TEMPLATES = {
         },
         "mapping": (data) => {
             return {
-                "choices": (data.choices || []).map(c => ({
-                    "question": c.question,
-                    "answers": c.answers || []
-                }))
+                "choices": (data.choices || []).map(c => {
+                    let answers = c.answers || [];
+                    // If answers are objects (AI output), normalize to strings and ensure correct is first
+                    if (answers.length > 0 && typeof answers[0] === 'object') {
+                        // Sort so that 'correct: true' comes first
+                        answers.sort((a, b) => (b.correct === true ? 1 : -1));
+                        answers = answers.map(a => a.text || "");
+                    }
+
+                    // Wrap in HTML <p> if not present (heuristic)
+                    answers = answers.map(a => a.trim().startsWith('<p>') ? a : `<p>${a}</p>`);
+
+                    return {
+                        "question": c.question.startsWith('<p>') ? c.question : `<p>${c.question}</p>`,
+                        "answers": answers
+                    };
+                })
             };
         }
     },
@@ -429,6 +442,165 @@ const TEMPLATES = {
             return {
                 "bookTitle": data.title || "Livre interactif",
                 "chapters": data.chapters || []
+            };
+        }
+    },
+
+    // H5P.IFrameEmbed 1.0
+    "H5P.IFrameEmbed": {
+        "type": "single",
+        "definition": {
+            "title": "Title",
+            "src": "https://example.com/page",
+            "width": "100%",
+            "height": "600px"
+        },
+        "mapping": (data) => {
+            return {
+                "source": data.iframe?.src || data.src || "about:blank",
+                "width": "100%",
+                "minWidth": "300px",
+                "height": data.iframe?.height || "600px",
+                "resizeSupported": false
+            };
+        }
+    },
+
+    // H5P.Summary 1.10
+    "H5P.Summary": {
+        "type": "collection",
+        "definition": {
+            "intro": "Introduction text",
+            "summaries": [
+                {
+                    "summary": ["Correct statement", "Wrong statement"],
+                    "tip": "Optional tip"
+                }
+            ]
+        },
+        "mapping": (data) => {
+            return {
+                "intro": data.intro || "Choose the correct statement.",
+                "summaries": (data.summaries || []).map(s => ({
+                    "summary": (s.summary || []).map(text => text.startsWith('<p>') ? text : `<p>${text}</p>`),
+                    "tip": s.tip || ""
+                }))
+            };
+        }
+    },
+
+    // H5P.Questionnaire 1.3
+    "H5P.Questionnaire": {
+        "type": "collection",
+        "definition": {
+            "questions": [
+                {
+                    "type": "SimpleMultiChoice",
+                    "question": "Question/Label",
+                    "alternatives": ["Yes", "No"],
+                    "required": false
+                }
+            ]
+        },
+        "mapping": (data) => {
+            return {
+                "questionnaireElements": (data.questions || []).map(q => {
+                    // Default to SimpleMultiChoice for checked items
+                    const isMulti = q.alternatives && q.alternatives.length > 0;
+                    if (isMulti) {
+                        return {
+                            "library": {
+                                "library": "H5P.SimpleMultiChoice 1.1",
+                                "params": {
+                                    "question": q.question || "Question?",
+                                    "alternatives": (q.alternatives || ["Yes", "No"]).map(a => ({
+                                        "text": a,
+                                        "feedback": { "chosenFeedback": "", "notChosenFeedback": "" }
+                                    })),
+                                    "inputType": "checkbox"
+                                },
+                                "metadata": { "contentType": "Simple Multi Choice", "title": "Simple Multi Choice", "license": "U" }
+                            },
+                            "requiredField": q.required || false
+                        };
+                    } else {
+                        // Assumption: Open ended if no alternatives
+                        return {
+                            "library": {
+                                "library": "H5P.OpenEndedQuestion 1.0",
+                                "params": {
+                                    "question": q.question || "Question?",
+                                    "placeholderText": "Your answer...",
+                                    "inputRows": "1"
+                                },
+                                "metadata": { "contentType": "Open Ended Question", "title": "Open Ended Question", "license": "U" }
+                            },
+                            "requiredField": q.required || false
+                        };
+                    }
+                }),
+                "successScreenOptions": {
+                    "enableSuccessScreen": true,
+                    "successMessage": "You have completed the questionnaire."
+                }
+            };
+        }
+    },
+
+    // H5P.Accordion 1.0
+    "H5P.Accordion": {
+        "type": "collection",
+        "definition": {
+            "panels": [
+                {
+                    "title": "Title",
+                    "content": "Content text"
+                }
+            ]
+        },
+        "mapping": (data) => {
+            return {
+                "panels": (data.panels || []).map(p => ({
+                    "title": p.title || "Title",
+                    "content": {
+                        "params": {
+                            "text": (p.content || "").startsWith('<') ? p.content : `<p>${p.content}</p>`
+                        },
+                        "library": "H5P.AdvancedText 1.1",
+                        "metadata": { "contentType": "Text", "title": "Text", "license": "U" },
+                        "subContentId": "sub-" + Math.random().toString(36).substr(2, 9)
+                    }
+                }))
+            };
+        }
+    },
+
+    // H5P.GuessTheAnswer 1.5
+    "H5P.GuessTheAnswer": {
+        "type": "single",
+        "definition": {
+            "taskDescription": "Question",
+            "solutionText": "The answer"
+        },
+        "mapping": (data) => {
+            let sol = data.solutionText || "Answer";
+            if (typeof sol === 'object') {
+                // Formatting helper for complex AI output
+                const format = (obj) => {
+                    if (Array.isArray(obj)) return `<ul>${obj.map(i => `<li>${format(i)}</li>`).join('')}</ul>`;
+                    if (typeof obj === 'object' && obj !== null) {
+                        return `<ul>${Object.entries(obj).map(([k, v]) => `<li><b>${k}:</b> ${format(v)}</li>`).join('')}</ul>`;
+                    }
+                    return String(obj);
+                };
+                sol = format(sol);
+            }
+
+            return {
+                "taskDescription": (data.taskDescription || "Question?").startsWith('<') ? data.taskDescription : `<p>${data.taskDescription}</p>`,
+                "solutionLabel": "Click to see answer",
+                "solutionText": sol,
+                "media": { "params": {} }
             };
         }
     }

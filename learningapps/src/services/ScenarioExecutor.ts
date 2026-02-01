@@ -86,8 +86,8 @@ export class ScenarioExecutor {
       // Construire l'URL d'iframe
       let iframeUrl = resultUrl;
       if (platform === 'learningapps' && appId) {
-        const { LEARNINGAPPS_BASE_URL } = await import('../config/constants.js');
-        iframeUrl = `${LEARNINGAPPS_BASE_URL}watch?v=${appId}`;
+        const baseUrl = process.env.LEARNINGAPPS_BASE_URL || 'https://learningapps.org/';
+        iframeUrl = `${baseUrl}watch?v=${appId}`;
       }
 
       return {

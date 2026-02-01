@@ -1,11 +1,21 @@
 // Fonctions helper communes pour les scénarios LearningApps
 
 import { Page } from 'playwright';
-import { LEARNINGAPPS_BASE_URL } from '../../config/constants.js';
+const LEARNINGAPPS_BASE_URL = process.env.LEARNINGAPPS_BASE_URL || 'https://learningapps.org/';
+
+/**
+ * Navigue vers la page d'accueil de LearningApps.
+ *
+ * @param page - Page Playwright
+ */
+export async function loginToLearningApps(page: Page): Promise<void> {
+  // Aller sur la page d'accueil
+  await page.goto(LEARNINGAPPS_BASE_URL);
+}
 
 /**
  * Initialise la session LearningApps : navigation, connexion, et ouverture de la page de création
- * 
+ *
  * @param page - Page Playwright
  */
 export async function initLearningAppsSession(page: Page): Promise<void> {

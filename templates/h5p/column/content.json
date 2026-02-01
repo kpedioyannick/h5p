@@ -731,6 +731,154 @@
                 "subContentId": "328ca5a1-3a38-418e-9e67-df31a22febd2"
             },
             "useSeparator": "auto"
+        },
+        {
+            "content": {
+                "params": {
+                    "introPage": {
+                        "showIntroPage": false,
+                        "startButtonText": "Start Quiz",
+                        "title": "Quiz Introduction",
+                        "introduction": "<p>Welcome to the quiz. Good luck!</p>"
+                    },
+                    "progressType": "text",
+                    "passPercentage": 50,
+                    "questions": [
+                        {
+                            "library": "H5P.MultiChoice 1.16",
+                            "params": {
+                                "question": "<p>Sample Question in Quiz</p>",
+                                "answers": [
+                                    {
+                                        "text": "Correct",
+                                        "correct": true
+                                    },
+                                    {
+                                        "text": "Wrong",
+                                        "correct": false
+                                    }
+                                ]
+                            },
+                            "subContentId": "gen-qs-q1"
+                        }
+                    ],
+                    "endGame": {
+                        "showResultPage": true,
+                        "showSolutionButton": true,
+                        "showRetryButton": true,
+                        "noResultMessage": "Finished",
+                        "message": "Your score: @score / @total",
+                        "scoreBarLabel": "Score"
+                    },
+                    "override": {
+                        "checkButton": true
+                    }
+                },
+                "library": "H5P.QuestionSet 1.20",
+                "metadata": {
+                    "contentType": "Quiz (Question Set)",
+                    "license": "U",
+                    "title": "Title Quiz",
+                    "authors": [],
+                    "changes": [],
+                    "extraTitle": "Title Quiz"
+                },
+                "subContentId": "gen-questionset-1"
+            },
+            "useSeparator": "auto"
+        },
+        {
+            "content": {
+                "params": {
+                    "taskDescription": "<p>Sort the paragraphs in the correct order.</p>",
+                    "paragraphs": [
+                        "Paragraph 1 (First)",
+                        "Paragraph 2 (Second)",
+                        "Paragraph 3 (Third)"
+                    ],
+                    "behaviour": {
+                        "enableRetry": true,
+                        "enableSolutionsButton": true
+                    },
+                    "l10n": {
+                        "checkAnswer": "Check",
+                        "showSolution": "Show Solution",
+                        "retry": "Retry",
+                        "result": "You got @score of @total points"
+                    }
+                },
+                "library": "H5P.SortParagraphs 0.11",
+                "metadata": {
+                    "contentType": "Sort the Paragraphs",
+                    "license": "U",
+                    "title": "Title Sort",
+                    "authors": [],
+                    "changes": [],
+                    "extraTitle": "Title Sort"
+                },
+                "subContentId": "gen-sortparas-1"
+            },
+            "useSeparator": "auto"
+        },
+        {
+            "content": {
+                "params": {
+                    "questions": [
+                        {
+                            "library": "H5P.SpeakTheWords 1.3",
+                            "params": {
+                                "question": "<p>Say 'Hello'</p>",
+                                "acceptedAnswers": [
+                                    "Hello",
+                                    "Hi"
+                                ],
+                                "incorrectAnswer": "Incorrect, try again.",
+                                "inputLanguage": "en-US"
+                            },
+                            "subContentId": "gen-stw-1"
+                        }
+                    ],
+                    "introPage": {
+                        "showIntroPage": true,
+                        "title": "Speak the Words Set",
+                        "introduction": "This requires microphone."
+                    },
+                    "progressType": "dots",
+                    "passPercentage": 50
+                },
+                "library": "H5P.SpeakTheWordsSet 1.3",
+                "metadata": {
+                    "contentType": "Speak the Words Set",
+                    "license": "U",
+                    "title": "Title SpeakSet",
+                    "authors": [],
+                    "changes": [],
+                    "extraTitle": "Title SpeakSet"
+                },
+                "subContentId": "gen-stwset-1"
+            },
+            "useSeparator": "auto"
+        },
+        {
+            "content": {
+                "params": {
+                    "source": "https://en.wikipedia.org/wiki/Main_Page",
+                    "width": "100%",
+                    "height": "500px",
+                    "resizeSupported": true
+                },
+                "library": "H5P.IFrameEmbed 1.0",
+                "metadata": {
+                    "contentType": "IFrame Embed",
+                    "license": "U",
+                    "title": "Title Iframe",
+                    "authors": [],
+                    "changes": [],
+                    "extraTitle": "Title Iframe"
+                },
+                "subContentId": "gen-iframe-1"
+            },
+            "useSeparator": "auto"
         }
     ]
 }

@@ -81,23 +81,18 @@ This script will create timestamped folders in the `content/` directory for each
 ## Supported Libraries
 
 The system currently supports generation for:
+- H5P.Audio 1.5
+- H5P.AudioRecorder 1.0
 - H5P.Blanks 1.14
-- H5P.Column 1.18
-- H5P.CoursePresentation 1.26
 - H5P.Dialogcards 1.9
-- H5P.DragQuestion 1.14
 - H5P.DragText 1.10
 - H5P.Essay 1.5
-- H5P.Flashcards 1.7
 - H5P.GuessTheAnswer 1.5
 - H5P.IFrameEmbed 1.0
-- H5P.InteractiveBook 1.11
-- H5P.MemoryGame 1.3
+- H5P.MarkTheWords 1.11
 - H5P.MultiChoice 1.16
 - H5P.QuestionSet 1.20
-- H5P.Questionnaire 1.3
-- H5P.SortParagraphs 0.11
-- H5P.SpeakTheWordsSet 1.3
+- H5P.SingleChoiceSet 1.11
 - H5P.Summary 1.10
 - H5P.Timeline 1.1
 - H5P.TrueFalse 1.8
