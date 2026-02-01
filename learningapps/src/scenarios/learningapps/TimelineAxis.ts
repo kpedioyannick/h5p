@@ -94,8 +94,21 @@ export default async function createTimelineAxis(page: Page, params: ScenarioPar
       });
 
       // Remplir la position sur l'axe
-      if (item.position !== undefined) {
-        await page.locator(`textarea[name="v${itemNum}_w"]`).fill(String(item.position));
+      let position = item.position;
+      if (position === undefined && (item as any).date) {
+        // Fallback: use date as position if available
+        // Try to extract year if it's a date string
+        const dateStr = String((item as any).date);
+        const yearMatch = dateStr.match(/-?\d+/);
+        if (yearMatch) {
+          position = yearMatch[0];
+        } else {
+          position = dateStr;
+        }
+      }
+
+      if (position !== undefined) {
+        await page.locator(`textarea[name="v${itemNum}_w"]`).fill(String(position));
       }
     }
   }

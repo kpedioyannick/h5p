@@ -22,24 +22,24 @@ console.log = console.error;
 const chunks: Buffer[] = [];
 process.stdin.on('data', (chunk) => chunks.push(chunk));
 process.stdin.on('end', async () => {
-    try {
-        const input = JSON.parse(Buffer.concat(chunks).toString());
-        const { module: moduleName, prompt: topic, count = 1 } = input;
+  try {
+    const input = JSON.parse(Buffer.concat(chunks).toString());
+    const { module: moduleName, prompt: topic, count = 1 } = input;
 
-        if (!moduleName || !topic) {
-            console.error(JSON.stringify({ error: 'Missing module or prompt' }));
-            process.exit(1);
-        }
+    if (!moduleName || !topic) {
+      console.error(JSON.stringify({ error: 'Missing module or prompt' }));
+      process.exit(1);
+    }
 
-        // Initialize OpenAI
-        if (!process.env.OPENAI_API_KEY) {
-            console.error(JSON.stringify({ error: 'OPENAI_API_KEY not found' }));
-            process.exit(1);
-        }
-        const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    // Initialize OpenAI
+    if (!process.env.OPENAI_API_KEY) {
+      console.error(JSON.stringify({ error: 'OPENAI_API_KEY not found' }));
+      process.exit(1);
+    }
+    const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-        // 1. Generate Parameters via OpenAI
-        const aiPrompt = `
+    // 1. Generate Parameters via OpenAI
+    const aiPrompt = `
     Generate a JSON object for LearningApps scenario parameters for the module "${moduleName}".
     The content should be about "${topic}".
     
@@ -68,7 +68,7 @@ process.stdin.on('end', async () => {
       { "title": "...", "task": "...", "levels": [ { "question": { "text": "...", "type": "text" }, "answers": ["Correct", "Wrong1", "Wrong2", "Wrong3"] } ] (Exactly 6 levels) }
       
     - HorseRace (Course de chevaux):
-      { "title": "...", "task": "...", "questions": [{ "question": "...", "answers": [{ "content": { "text": "..." }, "is_correct": true }] }] }
+      { "title": "...", "task": "...", "questions": [{ "question": "...", "answers": [{ "content": { "text": "..." }, "is_correct": true }] }] } (Generate at least 10 questions)
       
     - Hangman (Pendu):
       { "title": "...", "task": "...", "words": [{ "word": "BANANE", "hint": { "text": "Fruit" } }] }
@@ -101,46 +101,46 @@ process.stdin.on('end', async () => {
     If the module is not listed above, infer a reasonable structure based on the name.
     `;
 
-        const completion = await openai.chat.completions.create({
-            messages: [{ role: "user", content: aiPrompt }],
-            model: "gpt-4o-mini",
-            response_format: { type: "json_object" },
+    const completion = await openai.chat.completions.create({
+      messages: [{ role: "user", content: aiPrompt }],
+      model: "gpt-4o-mini",
+      response_format: { type: "json_object" },
+    });
+
+    const content = completion.choices[0].message.content;
+    if (!content) throw new Error('No content from OpenAI');
+
+    const aiData = JSON.parse(content);
+    let paramsList = aiData.results || [aiData];
+    // Ensure we respect the count if AI messed up
+    if (paramsList.length > count) paramsList = paramsList.slice(0, count);
+
+    // 2. Execute Scenarios
+    const results = [];
+    for (const params of paramsList) {
+      // Fallback title if AI missed it
+      if (!params.title) params.title = topic;
+
+      const result = await scenarioExecutor.executeScenario('learningapps', moduleName, params);
+      if (result.success) {
+        results.push({
+          lien: result.iframeUrl,
+          id: result.appId || 'unknown',
+          titre: params.title
         });
-
-        const content = completion.choices[0].message.content;
-        if (!content) throw new Error('No content from OpenAI');
-
-        const aiData = JSON.parse(content);
-        let paramsList = aiData.results || [aiData];
-        // Ensure we respect the count if AI messed up
-        if (paramsList.length > count) paramsList = paramsList.slice(0, count);
-
-        // 2. Execute Scenarios
-        const results = [];
-        for (const params of paramsList) {
-            // Fallback title if AI missed it
-            if (!params.title) params.title = topic;
-
-            const result = await scenarioExecutor.executeScenario('learningapps', moduleName, params);
-            if (result.success) {
-                results.push({
-                    lien: result.iframeUrl,
-                    id: result.appId || 'unknown',
-                    titre: params.title
-                });
-            } else {
-                // If failed, we sadly return nothing or error? 
-                // The user wants a strict array. Let's log stderr and skip or return error object?
-                // User wants strict array of good results.
-                console.error(`Failed to generate item: ${result.error}`);
-            }
-        }
-
-        originalLog(JSON.stringify(results));
-        process.exit(0);
-
-    } catch (err: any) {
-        console.error(JSON.stringify({ error: err.message }));
-        process.exit(1);
+      } else {
+        // If failed, we sadly return nothing or error? 
+        // The user wants a strict array. Let's log stderr and skip or return error object?
+        // User wants strict array of good results.
+        console.error(`Failed to generate item: ${result.error}`);
+      }
     }
+
+    originalLog(JSON.stringify(results));
+    process.exit(0);
+
+  } catch (err: any) {
+    console.error(JSON.stringify({ error: err.message }));
+    process.exit(1);
+  }
 });

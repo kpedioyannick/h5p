@@ -33,24 +33,26 @@ export class ScenarioLoader {
   }
 
   /**
-   * Vérifie si un scénario existe
+   * Vérifie si un scénario existe (insensible à la casse)
    */
   scenarioExists(platform: Platform, moduleName: string): boolean {
-    try {
-      const tsPath = join(__dirname, '..', 'scenarios', platform, `${moduleName}.ts`);
-      const jsPath = join(__dirname, '..', 'scenarios', platform, `${moduleName}.js`);
-      return existsSync(tsPath) || existsSync(jsPath);
-    } catch {
-      return false;
-    }
+    const scenarios = this.listScenarios(platform);
+    return scenarios.some(s => s.toLowerCase() === moduleName.toLowerCase());
   }
 
   /**
-   * Obtient le chemin complet d'un scénario
+   * Obtient le chemin complet d'un scénario (insensible à la casse)
    */
   getScenarioPath(platform: Platform, moduleName: string): string {
-    const tsPath = join(__dirname, '..', 'scenarios', platform, `${moduleName}.ts`);
-    const jsPath = join(__dirname, '..', 'scenarios', platform, `${moduleName}.js`);
+    const scenarios = this.listScenarios(platform);
+    const actualName = scenarios.find(s => s.toLowerCase() === moduleName.toLowerCase());
+
+    if (!actualName) {
+      throw new Error(`Scenario ${moduleName} not found`);
+    }
+
+    const tsPath = join(__dirname, '..', 'scenarios', platform, `${actualName}.ts`);
+    const jsPath = join(__dirname, '..', 'scenarios', platform, `${actualName}.js`);
     return existsSync(tsPath) ? tsPath : jsPath;
   }
 }

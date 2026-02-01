@@ -23,14 +23,22 @@ export default async function createTextInputQuiz(page: Page, params: ScenarioPa
   await initLearningAppsSession(page);
 
   await page.locator('div').filter({ hasText: 'Quiz avec saisie de texte' }).nth(5).click();
-  
+
   // Gérer la popup si elle apparaît
   try {
     const popupFrame = page.locator('iframe').contentFrame();
     if (popupFrame) {
       const innerPopupFrame = popupFrame.locator('#frame').contentFrame();
       if (innerPopupFrame) {
-        await innerPopupFrame.getByRole('button', { name: 'OK' }).click({ timeout: 3000 });
+        // Prioritize closing FeedbackPanel if it covers TaskPanel
+        try {
+          await innerPopupFrame.locator('#AppClientFeedbackPanel').getByRole('button', { name: 'OK' }).click({ timeout: 2000, force: true });
+          await page.waitForTimeout(500);
+        } catch (e) { /* ignore */ }
+
+        try {
+          await innerPopupFrame.locator('#AppClientTaskPanel').getByRole('button', { name: 'OK' }).click({ timeout: 3000, force: true });
+        } catch (e) { /* ignore */ }
       }
     }
   } catch {
@@ -93,7 +101,7 @@ export default async function createTextInputQuiz(page: Page, params: ScenarioPa
   if (previewFrame) {
     const innerFrame = previewFrame.locator('#frame').contentFrame();
     if (innerFrame) {
-      await innerFrame.getByRole('button', { name: 'OK' }).click();
+      await innerFrame.locator('#AppClientTaskPanel').getByRole('button', { name: 'OK' }).click({ force: true });
     }
   }
 
@@ -105,4 +113,3 @@ export default async function createTextInputQuiz(page: Page, params: ScenarioPa
   await page.waitForURL(/\/display\?v=|learningapps\.org\/\d+$/, { timeout: 15000 });
 
 }
-

@@ -27,14 +27,7 @@ export default async function createFillTable(page: Page, params: ScenarioParams
     await page.locator('#LearningApp_task').fill(params.task as string);
   }
 
-  // DEBUG: Inspecter les IDs disponibles
-  console.log('DEBUG: Finding potential table cell IDs...');
-  const els = await page.locator('input, textarea, button, div[id^="content"]').all();
-  for (const el of els.slice(0, 5)) {
-    const id = await el.getAttribute('id');
-    const tag = await el.evaluate(e => e.tagName);
-    console.log(`DEBUG: ID=${id}, Tag=${tag}`);
-  }
+
 
 
   const table = (params.table || { rows: (params as any).rows }) as {
@@ -49,10 +42,7 @@ export default async function createFillTable(page: Page, params: ScenarioParams
     if (firstRowCells.length > 0) {
       const cellContent = firstRowCells[0];
       const text = typeof cellContent === 'string' ? cellContent : (cellContent as any).text || '';
-      await page.evaluate(({ id, val }) => {
-        const el = (document as any).getElementById(id);
-        if (el) { el.value = val; el.dispatchEvent(new Event('change', { bubbles: true })); }
-      }, { id: 'content_1_1', val: text });
+      await page.locator('#content_1_1').fill(text);
     }
 
     // Ajouter des colonnes si nécessaire
@@ -66,10 +56,7 @@ export default async function createFillTable(page: Page, params: ScenarioParams
         const cellContent = firstRowCells[col - 1];
         const text = typeof cellContent === 'string' ? cellContent : (cellContent as any).text || '';
         const cellId = `content_1_${col}`;
-        await page.evaluate(({ id, val }) => {
-          const el = (document as any).getElementById(id);
-          if (el) { el.value = val; el.dispatchEvent(new Event('change', { bubbles: true })); }
-        }, { id: cellId, val: text });
+        await page.locator(`#${cellId}`).fill(text);
       }
     }
 
@@ -88,20 +75,24 @@ export default async function createFillTable(page: Page, params: ScenarioParams
 
           try {
             // Utiliser l'ID direct content_{row}_{col}
-            // Force fill hidden inputs/textareas using JS for body cells
             const cellId = `content_${row}_${col}`;
-            await page.evaluate(({ id, val }) => {
-              const el = (document as any).getElementById(id);
-              if (el) {
-                el.value = val;
-                el.dispatchEvent(new Event('change', { bubbles: true }));
-                el.dispatchEvent(new Event('input', { bubbles: true }));
-                // Trigger AppCreator if needed
-                if (el.onchange) (el as any).onchange(new Event('change'));
-              } else {
-                throw new Error(`Element #${id} not found`);
-              }
-            }, { id: cellId, val: text });
+            // Use standard fill to ensure events are triggered correctly
+            const cellLocator = page.locator(`#${cellId}`);
+            if (await cellLocator.count() > 0 && await cellLocator.isVisible()) {
+              await cellLocator.fill(text);
+              await cellLocator.blur();
+              // await cellLocator.press('Enter'); // Optional, blur is usually enough
+            } else {
+              // Fallback to evaluate if not visible (though they should be)
+              await page.evaluate(({ id, val }) => {
+                const el = (document as any).getElementById(id);
+                if (el) {
+                  el.value = val;
+                  el.dispatchEvent(new Event('change', { bubbles: true }));
+                  el.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+              }, { id: cellId, val: text });
+            }
           } catch (e) {
             console.log(`Warning: Could not fill cell at row ${row}, col ${col}`, e);
           }
@@ -110,7 +101,17 @@ export default async function createFillTable(page: Page, params: ScenarioParams
     }
   }
 
-  // Remplir le message de succès
+  // Configurer les colonnes fixes (Question/Answer format: Col 1 is fixed)
+  const fixedCols = (params.fixedColumns as number[]) || [1]; // Default to fixing column 1
+  for (const colNum of fixedCols) {
+    if (colNum >= 1 && colNum <= 5) {
+      const btn = page.locator(`#fixedColumn${colNum}_btn`);
+      if (await btn.isVisible()) {
+        // Toggle (assuming default is unchecked in new app)
+        await btn.click();
+      }
+    }
+  }
   await setSuccessMessage(page, params.successMessage as string);
 
   await page.getByRole('button', { name: '  Afficher un aperçu' }).click();

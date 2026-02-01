@@ -1,268 +1,100 @@
-# H5P Generation API
+# H5P & LearningApps Generator API
 
-This Node.js project provides an API to generate H5P content modules programmatically, either by providing direct parameters or by using AI (OpenAI) to generate the content.
+Ce projet expose une API simple pour générer des exercices interactifs H5P et LearningApps via l'IA.
 
-## Setup
+## Base URL
+`POST http://localhost:3000/api/generate`
 
-1.  **Install dependencies**:
-    ```bash
-    npm install
-    ```
+---
 
-2.  **Configure Environment (Optional)**:
-    To use the AI generation feature, you must set your OpenAI API key:
-    ```bash
-    export OPENAI_API_KEY="sk-..."
-    ```
+## 1. Génération H5P
 
-3.  **Start the server**:
-    ```bash
-    node server.js
-    ```
-    The server runs on port 3000.
+**Endpoint** : `/h5p`
 
-## Features
-
-- **Dynamic H5P Generation**: Generates `h5p.json` and `content.json` automatically.
-- **Dependency Resolution**: Recursively resolves libraries from the `libraries/` directory.
-- **AI Integration**: Generates content based on a topic using ChatGPT (requires API key).
-- **French Language Support**: Default language is set to French (`fr`).
-
-## API Usage
-
-### 1. Generate H5P Content (Manual)
-
-**Endpoint**: `POST /api/h5p/generate`
-
-**Body**:
+**Body (JSON)**:
 ```json
 {
-  "library": "H5P.QuestionSet 1.20",
-  "params": {
-    "questions": [ ... ]
+  "type": "qcm",        // Type d'activité (voir liste ci-dessous)
+  "prompt": "Capitales de l'Europe", // Sujet
+  "count": 3            // Nombre d'activités à générer (optionnel, défaut: 1)
+}
+```
+
+**Réponse (JSON)**:
+```json
+[
+  {
+    "lien": "https://h5p.sara.education/view/h5p-multi-choice/1769...",
+    "id": "1769...",
+    "titre": "Capitales de l'Europe"
   }
+]
+```
+
+### Types H5P Supportés (Valeurs pour "type")
+
+| Type Court (EN) | Librairie H5P Correspondante |
+|-----------------|------------------------------|
+| `multichoice` | H5P.MultiChoice |
+| `truefalse` | H5P.TrueFalse |
+| `blanks`, `fillblanks` | H5P.Blanks |
+| `accordion` | H5P.Accordion |
+| `essay` | H5P.Essay |
+| `markthewords` | H5P.MarkTheWords |
+| `dragtext` | H5P.DragText |
+| `dialogcards` | H5P.Dialogcards |
+| `summary` | H5P.Summary |
+| `timeline` | H5P.Timeline |
+| `guesstheanswer` | H5P.GuessTheAnswer |
+| `questionset` | H5P.QuestionSet |
+| `sortparagraphs` | H5P.SortParagraphs |
+| `singlechoiceset` | H5P.SingleChoiceSet |
+| `speakthewordsset` | H5P.SpeakTheWordsSet |
+| `flashcards` | H5P.Flashcards |
+| `questionnaire` | H5P.Questionnaire |
+
+---
+
+## 2. Génération LearningApps
+
+**Endpoint** : `/learningapps`
+
+**Body (JSON)**:
+```json
+{
+  "type": "qcm",        // Type d'activité (voir liste ci-dessous)
+  "prompt": "Mathématiques de base", // Sujet
+  "count": 1            // Nombre d'activités (optionnel)
 }
 ```
 
-### 2. Generate H5P Content (AI)
-
-**Endpoint**: `POST /api/h5p/generate-ai`
-
-**Body**:
+**Réponse (JSON)**:
 ```json
-{
-  "library": "H5P.MultiChoice 1.16",
-  "topic": "Les capitales européennes",
-  "count": 5
-}
-```
-
-**Response**:
-```json
-{
-  "success": true,
-  "path": "/var/www/html/my_first_h5p_environment/content/1765753404276",
-  "id": "1765753404276",
-  "aiParams": { ... }
-}
-```
-
-## Scripts
-
-### Generate Examples
-To generate examples for all supported H5P types (including Interactive Book, Timeline, etc.):
-
-```bash
-node generate_examples.js
-```
-
-This script will create timestamped folders in the `content/` directory for each example.
-
-## Supported Libraries
-
-The system currently supports generation for:
-- H5P.Audio 1.5
-- H5P.AudioRecorder 1.0
-- H5P.Blanks 1.14
-- H5P.Dialogcards 1.9
-- H5P.DragText 1.10
-- H5P.Essay 1.5
-- H5P.GuessTheAnswer 1.5
-- H5P.IFrameEmbed 1.0
-- H5P.MarkTheWords 1.11
-- H5P.MultiChoice 1.16
-- H5P.QuestionSet 1.20
-- H5P.SingleChoiceSet 1.11
-- H5P.Summary 1.10
-- H5P.Timeline 1.1
-- H5P.TrueFalse 1.8
-
-### 3. Generate LearningApps Content (Manual)
-
-**Endpoint**: `POST /api/content/learningapps`
-
-**Body**:
-```json
-{
-  "module": "Qcm",
-  "title": "My Quiz",
-  "params": {
-    "task": "Select the correct answer",
-    "questions": [
-      {
-        "question_text": "What is 2+2?",
-        "answers": [
-          { "answer_text": "4", "is_correct": true },
-          { "answer_text": "3", "is_correct": false }
-        ]
-      }
-    ]
+[
+  {
+    "lien": "https://learningapps.org/watch?v=...",
+    "id": "...",
+    "titre": "Mathématiques de base"
   }
-}
+]
 ```
 
-**Response**:
-```json
-{
-  "success": true,
-  "iframeUrl": "https://learningapps.org/watch?v=...",
-  "embedCode": "<iframe ...></iframe>",
-  "appId": "..."
-}
-```
+### Types LearningApps Supportés (Valeurs pour "type")
 
-### 4. Generate LearningApps Content (AI)
-
-**Endpoint**: `POST /api/content/learningapps/ai`
-
-**Body**:
-```json
-{
-  "module": "Qcm",
-  "topic": "Mathématiques",
-  "count": 5
-}
-```
-
-**Response**:
-```json
-{
-  "success": true,
-  "iframeUrl": "https://learningapps.org/watch?v=...",
-  "aiParams": { ... }
-}
-```
-
-## LearningApps Automation
-
-### Fixes Implemented
-- **Content Type Selection**: Fixed an issue where text/image inputs were not appearing because the type selection button was not clicked correctly. This affected:
-    - Ordering
-    - HorseRace
-    - Pairmatching
-    - TimelineAxis
-    - FillTable
-    - Grouping
-    - WriteAnswerCards
-- **Robustness**: Added explicit waits for input fields to appear after selection.
-
-### Known Issues
-- `TextInputQuiz`, `ImagePlacement`, and `SortingPuzzle` are currently failing and require further investigation.
-
-### 5. View Learning Path (Parcours)
-
-**Endpoint**: `GET /parcours`
-
-**Query Parameters**:
-- `modules`: A comma-separated list of modules to display in the Reveal.js presentation.
-  - Format: `type:id`
-  - Types: `h5p`, `learningapps`
-
-**Example URL**:
-```
-http://localhost:3000/parcours?modules=learningapps:p2i7qp7k325,h5p:1765754437885
-```
-
-**Features**:
-- Displays modules as slides in a Reveal.js presentation.
-- **H5P**: Embeds H5P content using the external server (port 8080).
-- **LearningApps**: Embeds LearningApps content using the official viewer.
-- **Mobile Friendly**: Full-screen responsive design.
-
-## 6. Planning & Revision Path
-
-**Endpoint**: `POST /planning`
-
-Generates a complete educational path based on Bloom's Taxonomy, delivered as a single **H5P Interactive Book**.
-
-**Body Parameters**:
-- `request` (string): The topic/subject (e.g., "La Révolution Française").
-- `type` (string): The type of path to generate.
-    - `revision`: (Default) Levels 1, 2, 3 (Remember, Understand, Apply).
-    - `course`: Levels 1, 2 (Remember, Understand) - Good for introductions.
-    - `exercises`: Levels 1, 3, 4+ (Remember, Apply, Analyze) - Intensive practice.
-- `subject` (string, optional): The subject matter.
-- `chapter` (string, optional): Context chapter.
-
-**Example**:
-```bash
-curl -X POST http://localhost:3000/planning \
--H "Content-Type: application/json" \
--d '{
-    "request": "Les fractions",
-    "type": "revision",
-    "subject": "Mathématiques"
-}'
-```
-
-**Response**:
-Returns a JSON object describing the path and containing the generated H5P Interactive Book URL.
-```json
-{
-  "subject": "Mathématiques",
-  "notions": [ ... ],
-  "parcours": {
-    "id": "172...",
-    "url": "/content/172.../interactive-book-file.h5p",
-    "type": "interactivebook"
-  }
-}
-```
-
-## GeoGebra Image Generation Service
-
-An internal service is available to generate images from GeoGebra commands using Playwright...
-
-### Usage
-
-The service is located in `geogebra/generator.js`.
-
-```javascript
-const geogebra = require('./geogebra/generator');
-
-const commands = [
-    "d1 = Line((0,0), (4,2))",
-    "d2 = Line((0,2), (4,4))",
-    "Text(\"Parallel Lines\", (1, 3))"
-];
-
-const options = {
-    hideCommandZone: true // Hides the Algebra Input/Command Zone
-};
-
-// Returns a PNG buffer
-const imageBuffer = await geogebra.generate(commands, options);
-```
-
-### Test Script
-
-A test script `test_geogebra.js` is provided to verify the service. It generates an image of two parallel lines and saves it to `content/geogebra_images/parallel_lines.png`.
-
-```bash
-node test_geogebra.js
-```
-
-A FAIRE 
-https://markmap.js.org/repl
-
-J'ai terminé la préparation et le lancement du projet sur PM2. Tous les modules demandés (H5P, Cours, LearningApps, Plan et Parcours) ont été testés avec succès. Les serveurs sont en ligne sous les noms generate-h5p-app (port 3000) et h5p-learningapps (port 3001). Tu peux consulter le walkthrough pour plus de détails.
+| Code Type | Description |
+|-----------|-------------|
+| `qcm` | QCM / Quiz classique | ok 
+| `fillblanks` | Texte à trous | ok 
+| `pairmatching` | Jeu de paires | ko 
+| `grouping` | Regroupement / Catégorisation | ok
+| `ordering` | Classement / Ordre | ok
+| `millionaire` | Qui veut gagner des millions | ok 
+| `horserace` | Course de chevaux |
+| `hangman` | Jeu du pendu |
+| `writeanswercards` | Cartes de réponse |
+| `filltable` | Tableau à compléter |
+| `grillecorrespondance` | Grille de correspondance |
+| `imageplacement` | Placement sur image |
+| `sortingpuzzle` | Puzzle de tri |
+| `textinputquiz` | Quiz avec saisie |
+| `timelineaxis` | Axe chronologique |
