@@ -34,11 +34,12 @@ export default async function createFillblanks(page: Page, params: ScenarioParam
   }
 
   // Remplir l'en-tête 1 (titel) selon son type
-  if (params.titel) {
-    const titel = params.titel as { text?: string; hint?: string; type?: string; image_url?: string; audio_url?: string; video_url?: string };
+  if (params.titel || params.speech) {
+    const titel = (params.titel as any) || {};
+    const defaultType = params.speech ? 'speech' : 'text';
     await setContentElement(page, 'titel', {
-      type: (titel.type || 'text') as any,
-      text: titel.text,
+      type: (titel.type || defaultType) as any,
+      text: titel.text || (params.speech ? params.title : undefined), // Default text for speech if title is provided
       hint: titel.hint,
       image_url: titel.image_url,
       audio_url: titel.audio_url,
@@ -50,7 +51,7 @@ export default async function createFillblanks(page: Page, params: ScenarioParam
   if (params.untertitel) {
     const untertitel = params.untertitel as { text?: string; hint?: string; type?: string; image_url?: string; audio_url?: string; video_url?: string };
     await setContentElement(page, 'untertitel', {
-      type: (untertitel.type || 'text') as any,
+      type: (untertitel.type || (params.speech ? 'speech' : 'text')) as any,
       text: untertitel.text,
       hint: untertitel.hint,
       image_url: untertitel.image_url,
@@ -66,6 +67,18 @@ export default async function createFillblanks(page: Page, params: ScenarioParam
   }
   
   await page.locator('#clozetext').fill(clozetext);
+
+  // Gérer le type de tâche
+  if (params.task_type === 'write') {
+    await page.locator('#type_btn').click();
+    await page.locator('li:has-text("Compléter")').click();
+    await page.waitForTimeout(500);
+  }
+
+  // Gérer la casse
+  if (params.case_sensitive === true) {
+    await page.locator('#casesense_btn').click();
+  }
 
   // Remplir les réponses pour chaque trou
   const clozes = params.clozes as Array<{ answer: string }>;
@@ -85,14 +98,30 @@ export default async function createFillblanks(page: Page, params: ScenarioParam
     }
   }
 
+  // Remplir le feedback si fourni
+  if (params.feedback) {
+    await page.locator('#feedback').fill(params.feedback as string);
+  }
+
+  // Remplir l'indice (help) si fourni
+  if (params.help || params.indice) {
+    const helpText = (params.help || params.indice) as string;
+    await page.locator('#LearningApp_help').fill(helpText);
+  }
+
   // Afficher un aperçu
   await page.getByRole('button', { name: '  Afficher un aperçu' }).click();
-  const previewFrame = page.locator('iframe').contentFrame();
-  if (previewFrame) {
-    const innerFrame = previewFrame.locator('#frame').contentFrame();
-    if (innerFrame) {
-      await innerFrame.getByRole('button', { name: 'OK' }).click();
+  
+  try {
+    const previewFrame = page.locator('iframe').contentFrame();
+    if (previewFrame) {
+      const innerFrame = previewFrame.locator('#frame').contentFrame();
+      if (innerFrame) {
+        await innerFrame.getByRole('button', { name: 'OK' }).click({ timeout: 5000 });
+      }
     }
+  } catch (err) {
+    console.warn('[Fillblanks] Preview OK button not found or timed out, proceeding.');
   }
 
   // Sauvegarder

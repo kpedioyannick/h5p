@@ -69,8 +69,9 @@ export default async function createPairmatching(page: Page, params: ScenarioPar
       // Remplir v1 (premier élément)
       if (pair.v1) {
         const v1Content = processContent(pair.v1);
+        const defaultV1Type = (params.speech_v1 || params.speech) ? 'speech' : 'text';
         await setContentElement(page, `v1_${pairNum}`, {
-          type: (v1Content.type || 'text') as any,
+          type: (v1Content.type || defaultV1Type) as any,
           text: v1Content.text,
           hint: v1Content.hint,
           image_url: v1Content.image_url,
@@ -85,8 +86,9 @@ export default async function createPairmatching(page: Page, params: ScenarioPar
       // Remplir v2 (deuxième élément)
       if (pair.v2) {
         const v2Content = processContent(pair.v2);
+        const defaultV2Type = (params.speech_v2 || params.speech) ? 'speech' : 'text';
         await setContentElement(page, `v2_${pairNum}`, {
-          type: (v2Content.type || 'text') as any,
+          type: (v2Content.type || defaultV2Type) as any,
           text: v2Content.text,
           hint: v2Content.hint,
           image_url: v2Content.image_url,
@@ -100,14 +102,35 @@ export default async function createPairmatching(page: Page, params: ScenarioPar
     }
   }
 
+  // Option "Cacher les paires trouvées"
+  if (params.fadePairs === true) {
+    await page.locator('#fade_btn').click();
+  }
+
+  // Remplir le feedback si fourni
+  if (params.feedback) {
+    await page.locator('#feedback').fill(params.feedback as string);
+  }
+
+  // Remplir l'indice (help) si fourni
+  if (params.help || params.indice) {
+    const helpText = (params.help || params.indice) as string;
+    await page.locator('#LearningApp_help').fill(helpText);
+  }
+
   // Afficher un aperçu
   await page.getByRole('button', { name: '  Afficher un aperçu' }).click();
-  const previewFrame = page.locator('iframe').contentFrame();
-  if (previewFrame) {
-    const innerFrame = previewFrame.locator('#frame').contentFrame();
-    if (innerFrame) {
-      await innerFrame.getByRole('button', { name: 'OK' }).click();
+  
+  try {
+    const previewFrame = page.locator('iframe').contentFrame();
+    if (previewFrame) {
+      const innerFrame = previewFrame.locator('#frame').contentFrame();
+      if (innerFrame) {
+        await innerFrame.getByRole('button', { name: 'OK' }).click({ timeout: 5000 });
+      }
     }
+  } catch (err) {
+    console.warn('[Pairmatching] Preview OK button not found or timed out, proceeding.');
   }
 
   // Sauvegarder

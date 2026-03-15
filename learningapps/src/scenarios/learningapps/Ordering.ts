@@ -38,6 +38,17 @@ export default async function createOrdering(page: Page, params: ScenarioParams)
     await page.locator('#LearningApp_task').fill(params.task as string);
   }
 
+  // Gérer le mode d'affichage si fourni
+  if (params.displayMode) {
+    await page.locator('#display_btn').click();
+    let displayOption = 'Cartes placées librement';
+    if (params.displayMode === 'vertical') displayOption = 'Cartes placées verticalement';
+    if (params.displayMode === 'horizontal') displayOption = 'Cartes placées horizontalement';
+    
+    await page.locator(`li:has-text("${displayOption}")`).click();
+    await page.waitForTimeout(500);
+  }
+
   // Remplir les éléments à ordonner
   const items = params.items as Array<{
     text?: string;
@@ -60,9 +71,9 @@ export default async function createOrdering(page: Page, params: ScenarioParams)
       }
 
       // Configurer le contenu de l'élément selon son type
-      // Supporte item.text, item.content (string) ou item.content (object)
+      const defaultType = params.speech ? 'speech' : 'text';
       let itemText = item.text;
-      let itemType = item.type || 'text';
+      let itemType = item.type || defaultType;
       let itemImage = item.image_url;
       let itemAudio = item.audio_url;
       let itemVideo = item.video_url;
@@ -96,17 +107,16 @@ export default async function createOrdering(page: Page, params: ScenarioParams)
     }
   }
 
-  // Remplir le message de succès si fourni
-  if (params.successMessage) {
-    const successElement = page.getByText('Bravo, tu as trouvé la bonne');
-    if (await successElement.count() > 0) {
-      await successElement.fill(params.successMessage as string);
-    }
+  // Remplir le message de succès (feedback)
+  if (params.feedback || params.successMessage) {
+    const feedbackText = (params.feedback || params.successMessage) as string;
+    await page.locator('#feedback').fill(feedbackText);
   }
 
   // Remplir le texte d'aide si fourni
-  if (params.help) {
-    await page.locator('#LearningApp_help').fill(params.help as string);
+  if (params.help || params.indice) {
+    const helpText = (params.help || params.indice) as string;
+    await page.locator('#LearningApp_help').fill(helpText);
   }
 
   // Masquer les chiffres si demandé
@@ -116,12 +126,17 @@ export default async function createOrdering(page: Page, params: ScenarioParams)
 
   // Afficher un aperçu
   await page.getByRole('button', { name: '  Afficher un aperçu' }).click();
-  const previewFrame = page.locator('iframe').contentFrame();
-  if (previewFrame) {
-    const innerFrame = previewFrame.locator('#frame').contentFrame();
-    if (innerFrame) {
-      await innerFrame.getByRole('button', { name: 'OK' }).click();
+  
+  try {
+    const previewFrame = page.locator('iframe').contentFrame();
+    if (previewFrame) {
+      const innerFrame = previewFrame.locator('#frame').contentFrame();
+      if (innerFrame) {
+        await innerFrame.getByRole('button', { name: 'OK' }).click({ timeout: 5000 });
+      }
     }
+  } catch (err) {
+    console.warn('[Ordering] Preview OK button not found or timed out, proceeding.');
   }
 
   // Sauvegarder

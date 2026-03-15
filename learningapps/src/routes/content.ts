@@ -10,16 +10,28 @@ const router = Router();
 const scenarioLoader = new ScenarioLoader();
 const scenarioExecutor = new ScenarioExecutor();
 
-// Lazy-load OpenAI client to ensure environment variables are loaded first
-let openai: OpenAI | null = null;
-function getOpenAI(): OpenAI | null {
-  if (openai === null && process.env.OPENAI_API_KEY) {
-    openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-    console.log('✅ OpenAI client initialized for LearningApps routes');
+// Lazy-load AI client
+let aiClient: OpenAI | null = null;
+let aiProvider: 'openai' | 'deepseek' = 'openai';
+
+function getAIClient(): OpenAI | null {
+  if (aiClient === null) {
+    if (process.env.DEEPSEEK_API_KEY) {
+      aiClient = new OpenAI({
+        apiKey: process.env.DEEPSEEK_API_KEY,
+        baseURL: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com',
+      });
+      aiProvider = 'deepseek';
+      console.log('✅ DeepSeek client initialized for LearningApps routes');
+    } else if (process.env.OPENAI_API_KEY) {
+      aiClient = new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+      });
+      aiProvider = 'openai';
+      console.log('✅ OpenAI client initialized for LearningApps routes');
+    }
   }
-  return openai;
+  return aiClient;
 }
 
 /**
@@ -107,9 +119,9 @@ router.post('/learningapps/ai', async (req: Request, res: Response) => {
   try {
     console.log('Received LearningApps AI generation request');
 
-    const openaiClient = getOpenAI();
-    if (!openaiClient) {
-      return res.status(500).json({ error: 'OpenAI API key not configured on server.' });
+    const aiClient = getAIClient();
+    if (!aiClient) {
+      return res.status(500).json({ error: 'AI API key (OpenAI or DeepSeek) not configured on server.' });
     }
 
     const { module: moduleName, topic, count = 5 } = req.body;
@@ -172,9 +184,13 @@ router.post('/learningapps/ai', async (req: Request, res: Response) => {
     Generate appropriate content for the requested module.
     `;
 
-    const completion = await openaiClient.chat.completions.create({
+    const model = aiProvider === 'deepseek' 
+      ? (process.env.DEEPSEEK_MODEL || 'deepseek-chat') 
+      : 'gpt-4o-mini';
+
+    const completion = await aiClient.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
-      model: "gpt-4o-mini",
+      model: model,
       response_format: { type: "json_object" },
     });
 

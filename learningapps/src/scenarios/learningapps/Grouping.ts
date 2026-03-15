@@ -40,6 +40,18 @@ export default async function createGrouping(page: Page, params: ScenarioParams)
     await page.locator('#LearningApp_task').fill(params.task as string);
   }
 
+  // Gérer les options de mise en page
+  if (params.useColors === true) {
+    await page.locator('#backgroundColors_btn').click();
+  }
+
+  if (params.layout) {
+    await page.locator('#cardtype_btn').click();
+    let layoutOption = 'Affichage de toutes les cartes dès le début';
+    if (params.layout === 'one_by_one') layoutOption = 'Affichage des cartes l\'une après l\'autre';
+    await page.locator(`li:has-text("${layoutOption}")`).click();
+  }
+
   // Remplir les groupes (clusters)
   const clusters = (params.clusters || (params as any).groups) as Array<{
     name: { text?: string; hint?: string; type?: string; image_url?: string } | string;
@@ -98,11 +110,12 @@ export default async function createGrouping(page: Page, params: ScenarioParams)
             }
 
             // Remplir l'item selon son type
-            let itemObj = typeof item === 'string' ? { text: item, type: 'text' } : item;
+            const defaultItemType = params.speech ? 'speech' : 'text';
+            let itemObj = typeof item === 'string' ? { text: item, type: defaultItemType } : item;
             itemObj = processContent(itemObj);
 
             await setContentElement(page, `v${clusterNum}_${itemNum}`, {
-              type: (itemObj.type || 'text') as any,
+              type: (itemObj.type || defaultItemType) as any,
               text: itemObj.text,
               hint: (itemObj as any).hint,
               image_url: (itemObj as any).image_url,
@@ -119,27 +132,30 @@ export default async function createGrouping(page: Page, params: ScenarioParams)
   }
 
   // Remplir le texte d'aide si fourni
-  if (params.help) {
-    await page.locator('#LearningApp_help').fill(params.help as string);
+  if (params.help || params.indice) {
+    const helpText = (params.help || params.indice) as string;
+    await page.locator('#LearningApp_help').fill(helpText);
   }
 
-  // Remplir le message de succès si fourni
-  if (params.successMessage) {
-    // Le message de succès semble être dans un élément avec le texte "Super, tu as trouvé la bonne"
-    const successElement = page.getByText('Super, tu as trouvé la bonne');
-    if (await successElement.count() > 0) {
-      await successElement.fill(params.successMessage as string);
-    }
+  // Remplir le feedback si fourni
+  if (params.feedback || params.successMessage) {
+    const feedbackText = (params.feedback || params.successMessage) as string;
+    await page.locator('#feedback').fill(feedbackText);
   }
 
   // Afficher un aperçu
   await page.getByRole('button', { name: '  Afficher un aperçu' }).click();
-  const previewFrame = page.locator('iframe').contentFrame();
-  if (previewFrame) {
-    const innerFrame = previewFrame.locator('#frame').contentFrame();
-    if (innerFrame) {
-      await innerFrame.getByRole('button', { name: 'OK' }).click();
+  
+  try {
+    const previewFrame = page.locator('iframe').contentFrame();
+    if (previewFrame) {
+      const innerFrame = previewFrame.locator('#frame').contentFrame();
+      if (innerFrame) {
+        await innerFrame.getByRole('button', { name: 'OK' }).click({ timeout: 5000 });
+      }
     }
+  } catch (err) {
+    console.warn('[Grouping] Preview OK button not found or timed out, proceeding.');
   }
 
   // Sauvegarder

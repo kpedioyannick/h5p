@@ -65,70 +65,28 @@ export default async function createWriteAnswerCards(page: Page, params: Scenari
       }
 
       // Configurer le contenu de la carte selon son type
+      const defaultType = params.speech ? 'speech' : 'text';
       let cardContent = card.content;
       if (!cardContent && card.question) {
-        cardContent = { text: card.question, type: 'text' };
-      } else if (cardContent && (cardContent as any).content) {
-        // Handle nested content object if present
-        if (typeof (cardContent as any).content === 'string') {
-          cardContent = { ...cardContent, text: (cardContent as any).content };
-        } else {
-          cardContent = { ...cardContent, ...(cardContent as any).content };
-        }
+        cardContent = { text: card.question, type: defaultType, hint: card.hint || card.question_hint };
+      } else if (!cardContent) {
+        cardContent = { type: defaultType, hint: card.hint || card.question_hint };
+      } else if (cardContent && !cardContent.hint) {
+        // Fallback for hint if not in nested content
+        cardContent.hint = card.hint || card.question_hint;
       }
 
-      if (cardContent) {
-        // Note: Pour ce module, les boutons utilisent btn3 (texte), btn1 (image), btn2 (vidéo)
-        // Mais on peut utiliser setContentElement qui gère automatiquement les mappings
-        const contentType = (cardContent as any).type || 'text';
-
-        // Mapping spécifique pour ce module (btn2 pour vidéo au lieu de btn6)
-        const typeButtons: Record<string, string> = {
-          'text': 'btn3',
-          'image': 'btn1',
-          'speech': 'btn5',
-          'audio': 'btn4',
-          'video': 'btn2' // Ce module utilise btn2 pour la vidéo
-        };
-
-        const btn = typeButtons[contentType] || 'btn3';
-        await page.locator(`#content${cardNum}_${btn}`).click();
-        await page.waitForTimeout(300);
-
-        // Remplir le contenu selon le type
-        if (contentType === 'text') {
-          if ((cardContent as any).text) {
-            await page.locator(`#content${cardNum}_text`).fill((cardContent as any).text);
-          }
-          if ((cardContent as any).hint) {
-            await page.locator(`#content${cardNum}_text_hint`).fill((cardContent as any).hint);
-          }
-        } else if (contentType === 'speech') {
-          if ((cardContent as any).text) {
-            await page.locator(`#content${cardNum}_speech`).fill((cardContent as any).text);
-          }
-          if ((cardContent as any).hint) {
-            await page.locator(`#content${cardNum}_speech_hint`).fill((cardContent as any).hint);
-          }
-        } else if (contentType === 'image' && (cardContent as any).image_url) {
-          const imageFrame = page.locator('#ImageSelectionFrameI').contentFrame();
-          if (imageFrame) {
-            await imageFrame.getByRole('textbox', { name: 'URL' }).fill((cardContent as any).image_url);
-            await imageFrame.getByRole('link', { name: 'Utiliser un Image' }).click();
-            await page.waitForTimeout(500);
-          }
-        } else if (contentType === 'video' && (cardContent as any).video_url) {
-          const videoFrame = page.locator('#VideoSelectionFrameI').contentFrame();
-          if (videoFrame) {
-            await videoFrame.getByRole('textbox', { name: 'URL' }).fill((cardContent as any).video_url);
-            await videoFrame.getByRole('link', { name: /Utiliser un Vidéo|Utiliser|OK|Valider/i }).click();
-            await page.waitForTimeout(500);
-          }
-        } else if (contentType === 'audio' && (cardContent as any).audio_url) {
-          // TODO: Gérer l'audio si nécessaire
-          console.log(`Audio URL fournie pour carte ${cardNum}: ${(cardContent as any).audio_url} - Upload à implémenter`);
-        }
-      }
+      await setContentElement(page, `content${cardNum}`, {
+        type: (cardContent.type || defaultType) as any,
+        text: cardContent.text,
+        hint: cardContent.hint,
+        image_url: cardContent.image_url,
+        audio_url: cardContent.audio_url,
+        video_url: cardContent.video_url
+      }, {
+        useButtonText: true,
+        buttonPrefix: `content${cardNum}_buttons`
+      });
 
       // Remplir la solution (réponse attendue)
       const solution = card.solution || card.answer;
@@ -138,19 +96,40 @@ export default async function createWriteAnswerCards(page: Page, params: Scenari
     }
   }
 
-  // Remplir le texte d'aide si fourni
-  if (params.help) {
-    await page.locator('#LearningApp_help').fill(params.help as string);
+  // Gérer la casse
+  if (params.case_sensitive === true) {
+    await page.locator('#casesense_btn').click();
+  }
+
+  // Afficher l'aide
+  if (params.showHelp === true) {
+    await page.locator('#useHelp_btn').click();
+  }
+
+  // Remplir le feedback si fourni
+  if (params.feedback) {
+    await page.locator('#feedback').fill(params.feedback as string);
+  }
+
+  // Remplir l'indice (help) si fourni
+  if (params.help || params.indice) {
+    const helpText = (params.help || params.indice) as string;
+    await page.locator('#LearningApp_help').fill(helpText);
   }
 
   // Afficher un aperçu
   await page.getByRole('button', { name: '  Afficher un aperçu' }).click();
-  const previewFrame = page.locator('iframe').contentFrame();
-  if (previewFrame) {
-    const innerFrame = previewFrame.locator('#frame').contentFrame();
-    if (innerFrame) {
-      await innerFrame.getByRole('button', { name: 'OK' }).click();
+  
+  try {
+    const previewFrame = page.locator('iframe').contentFrame();
+    if (previewFrame) {
+      const innerFrame = previewFrame.locator('#frame').contentFrame();
+      if (innerFrame) {
+        await innerFrame.getByRole('button', { name: 'OK' }).click({ timeout: 5000 });
+      }
     }
+  } catch (err) {
+    console.warn('[WriteAnswerCards] Preview OK button not found or timed out, proceeding.');
   }
 
   // Sauvegarder

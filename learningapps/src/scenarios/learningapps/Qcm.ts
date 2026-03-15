@@ -74,7 +74,8 @@ export default async function createQCM(page: Page, params: ScenarioParams) {
       }
 
       // Remplir la question selon son type
-      const questionType = (question as any).question_type || 'text';
+      const defaultQuestionType = (params.speech_questions || params.speech) ? 'speech' : 'text';
+      const questionType = (question as any).question_type || defaultQuestionType;
       
       await setContentElement(page, `question${questionNum}`, {
         type: questionType as any,
@@ -99,7 +100,8 @@ export default async function createQCM(page: Page, params: ScenarioParams) {
           }
 
           // Gérer le type de réponse
-          const answerType = (answer.type as string) || 'text';
+          const defaultAnswerType = (params.speech_answers || params.speech) ? 'speech' : 'text';
+          const answerType = (answer.type as string) || defaultAnswerType;
           
           await setContentElement(page, `answer${questionNum}_${answerNum}`, {
             type: answerType as any,
@@ -119,22 +121,39 @@ export default async function createQCM(page: Page, params: ScenarioParams) {
     }
   }
 
-  // 10. Cliquer sur "Évaluation à la fin" (optionnel, peut être paramétré)
+  // 10. Remplir le feedback si fourni
+  if (params.feedback) {
+    await page.locator('#feedback').fill(params.feedback as string);
+  }
+
+  // Remplir l'indice (help) si fourni
+  if (params.help || params.indice) {
+    const helpText = (params.help || params.indice) as string;
+    await page.locator('#LearningApp_help').fill(helpText);
+  }
+
+  // 11. Cliquer sur "Évaluation à la fin" (optionnel, peut être paramétré)
   if (params.evaluationAtEnd !== false) {
     await page.getByRole('button', { name: 'Évaluation à la fin' }).click();
   }
 
-  // 11. Afficher un aperçu (optionnel)
+  // 12. Afficher un aperçu (optionnel)
   await page.getByRole('button', { name: '  Afficher un aperçu' }).click();
-  const previewFrame = page.locator('iframe').contentFrame();
-  if (previewFrame) {
-    const innerFrame = previewFrame.locator('#frame').contentFrame();
-    if (innerFrame) {
-      await innerFrame.getByRole('button', { name: 'OK' }).click();
+  
+  try {
+    const previewFrame = page.locator('iframe').contentFrame();
+    if (previewFrame) {
+      const innerFrame = previewFrame.locator('#frame').contentFrame();
+      if (innerFrame) {
+        // Un timeout court de 5s suffit pour le bouton OK de l'aperçu
+        await innerFrame.getByRole('button', { name: 'OK' }).click({ timeout: 5000 });
+      }
     }
+  } catch (err) {
+    console.warn('[Qcm] Preview OK button not found or timed out, proceeding to save anyway.');
   }
 
-  // 12. Sauvegarder
+  // 13. Sauvegarder
   await page.getByRole('button', { name: ' Enregistrer l\'appli' }).click();
 
   // 13. Attendre la redirection vers la page de l'app créée

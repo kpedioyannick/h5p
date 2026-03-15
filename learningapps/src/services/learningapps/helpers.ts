@@ -9,34 +9,51 @@ import { LEARNINGAPPS_BASE_URL } from '../../config/constants.js';
  * @param page - Page Playwright
  */
 export async function initLearningAppsSession(page: Page): Promise<void> {
-  // 1. Aller sur LearningApps
-  await page.goto(LEARNINGAPPS_BASE_URL);
-
-  // 2. Se connecter avec les identifiants du .env
   const email = process.env.LEARNINGAPPS_EMAIL;
   const password = process.env.LEARNINGAPPS_PASSWORD;
-
+  console.log('[LearningApps] initLearningAppsSession started');
   if (email && password) {
-    await page.getByRole('link', { name: ' Se connecter' }).click();
+    try {
+      console.log('[LearningApps] 🌐 Navigating to login page...');
+      await page.goto('https://learningapps.org/login.php');
+      await page.waitForLoadState('domcontentloaded');
 
-    const loginFrame = page.locator('#LoginFrameI').contentFrame();
-    if (loginFrame) {
-      await loginFrame.getByRole('textbox', { name: 'e-mail' }).fill(email);
-      await loginFrame.getByRole('textbox', { name: 'Mot de passe' }).fill(password);
-      await loginFrame.getByRole('checkbox', { name: 'Se souvenir de moi (sur cet' }).check();
-      await loginFrame.getByRole('button', { name: 'Connexion' }).click();
+      // Le formulaire de connexion est dans l'iframe #LoginFrameI
+      console.log('[LearningApps] ⏳ Waiting for login iframe #LoginFrameI...');
+      const loginFrame = page.frameLocator('#LoginFrameI');
+      const emailField = loginFrame.locator('#username');
+      const passwordField = loginFrame.locator('#password');
+      await emailField.waitFor({ state: 'visible', timeout: 15000 });
 
-      // Gérer la popup "Ne plus montrer cette boite" si elle apparaît
+      console.log(`[LearningApps] 🔑 Attempting login for ${email}...`);
+      await emailField.fill(email);
+      await passwordField.fill(password);
+
+      console.log('[LearningApps] ⏳ Clicking login button...');
+      const loginButton = loginFrame.locator('button#subBtn, button:has-text("Login"), button:has-text("Connexion"), button:has-text("Anmelden")');
+      await loginButton.click();
+      
+      await page.waitForLoadState('networkidle');
+      console.log('[LearningApps] ✅ Login submitted');
+      
+      // Petit délai pour laisser la connexion se propager
+      await page.waitForTimeout(2000);
+    } catch (error) {
+      console.error(`❌ Login process failed: ${error}`);
       try {
-        await loginFrame.getByRole('link', { name: 'Ne plus montrer cette boite' }).click({ timeout: 3000 });
-      } catch {
-        // Popup non présente, continuer
+        const screenshotPath = `/var/js/h5p/learningapps/debug_screenshots/login_fail_${Date.now()}.png`;
+        await page.screenshot({ path: screenshotPath });
+        console.log(`📸 Screenshot saved to ${screenshotPath}`);
+      } catch (screenshotError) {
+        console.error(`Failed to take screenshot: ${screenshotError}`);
       }
     }
   }
 
-  // 3. Cliquer sur "Créer une appli"
-  await page.getByRole('link', { name: ' Créer une appli' }).click();
+  console.log('[LearningApps] ➕ Navigating to creation page...');
+  await page.goto('https://learningapps.org/create.php');
+  await page.waitForLoadState('networkidle');
+  console.log('[LearningApps] ✅ Session initialized');
 }
 
 /**

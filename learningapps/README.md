@@ -41,7 +41,22 @@ npm run build
 npm start
 ```
 
-Le serveur démarre sur `http://localhost:3000` par défaut.
+Le serveur démarre sur `http://localhost:3001` par défaut (ou `PORT` / `LEARNINGAPPS_PORT` si définis).
+
+### Valider la création d’un QCM
+
+1. Lancer le serveur dans un terminal :
+   ```bash
+   npm run dev
+   ```
+2. Dans un autre terminal, lancer le script de validation :
+   ```bash
+   npm run validate:qcm
+   ```
+   (ou `node validate_qcm_creation.cjs`)
+   Le script vérifie que le serveur répond, puis crée un QCM via l’API et vérifie que la réponse contient `success`, `appId` et `iframeUrl`. En cas d’échec, il affiche l’erreur et quitte avec un code non nul.
+
+   Pour pointer vers un autre serveur : `LEARNINGAPPS_BASE_API=http://localhost:3000 node validate_qcm_creation.cjs`
 
 ## 📖 Documentation API
 
@@ -386,3 +401,13 @@ Pour ajouter un nouveau module :
 ## 📄 Licence
 
 ISC
+
+QCM => OK
+Ordre simple => OK
+Classer par paire => OK
+Regroupement => OK
+Cartes avec réponses à écrire => OK
+Course de chevaux => OK
+Grille de correspondance => OK
+Compléter/remplir un tableau => OK
+Quiz avec saisie de texte pour la réponse => OK

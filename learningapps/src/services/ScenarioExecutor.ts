@@ -23,9 +23,10 @@ export class ScenarioExecutor {
     params: ScenarioParams
   ): Promise<ScenarioResult> {
     try {
-      // Lancer le navigateur en mode headed (visible)
+      // Lancer le navigateur en mode visible (HEADLESS=true pour masquer)
+      const headless = process.env.HEADLESS === 'true';
       this.browser = await chromium.launch({
-        headless: false,
+        headless,
         slowMo: 100 // Ralentir pour voir les actions
       });
 
