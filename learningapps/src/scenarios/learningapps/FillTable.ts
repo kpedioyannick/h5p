@@ -27,30 +27,34 @@ export default async function createFillTable(page: Page, params: ScenarioParams
     await page.locator('#LearningApp_task').fill(params.task as string);
   }
 
-  const table = (params.table || { rows: (params as any).rows }) as {
-    rows: Array<{ cells?: string[], items?: string[] }>;
-  };
+  const tableData = (params.table || { rows: (params as any).rows }) as any;
+  const rows = tableData.rows || [];
 
-  if (table && table.rows && table.rows.length > 0) {
+  if (rows.length > 0) {
+    console.log(`[FillTable] Processing ${rows.length} rows...`);
+    
     // 1. Ajouter les lignes nécessaires (la première existe déjà)
-    for (let rowNum = 2; rowNum <= table.rows.length; rowNum++) {
+    for (let rowNum = 2; rowNum <= rows.length; rowNum++) {
       await page.getByRole('button', { name: ' Ajouter une ligne' }).click();
       await page.waitForTimeout(400);
     }
 
     // 2. Pour CHAQUE ligne, ajouter les colonnes et remplir
-    for (let rIndex = 0; rIndex < table.rows.length; rIndex++) {
+    for (let rIndex = 0; rIndex < rows.length; rIndex++) {
       const rowNum = rIndex + 1;
-      const rowData = table.rows[rIndex];
-      const cells = rowData.cells || rowData.items || [];
+      const rowData = rows[rIndex];
+      
+      // Normalisation: Accepter ["cell1", "cell2"] ou { cells: ["cell1", "cell2"] }
+      const cells = Array.isArray(rowData) ? rowData : (rowData.cells || rowData.items || []);
+      
+      console.log(`[FillTable] Row ${rowNum}: ${cells.length} columns`);
 
       // Ajouter les colonnes pour CETTE ligne (la première colonne existe par défaut dans chaque ligne)
       for (let colNum = 2; colNum <= cells.length; colNum++) {
         const addColBtn = page.locator(`#addNewListElementBtn_Spalte${rowNum}`);
-        // Scroll into view to ensure it's clickable
         await addColBtn.scrollIntoViewIfNeeded();
         await addColBtn.click();
-        await page.waitForTimeout(300);
+        await page.waitForTimeout(400); // Augmenté pour plus de stabilité
       }
 
       // Remplir les cellules de cette ligne
@@ -58,8 +62,8 @@ export default async function createFillTable(page: Page, params: ScenarioParams
         const colNum = cIndex + 1;
         const cellText = cells[cIndex] || '';
         
+        console.log(`[FillTable] Filling R${rowNum}C${colNum}: "${cellText}"`);
         const cellLocator = page.locator(`#content_${rowNum}_${colNum}`);
-        // Ensure textarea exists and is ready
         await cellLocator.scrollIntoViewIfNeeded();
         await cellLocator.fill(cellText);
       }
@@ -131,9 +135,27 @@ export default async function createFillTable(page: Page, params: ScenarioParams
   }
 
   // Enregistrer
-  await page.getByRole('button', { name: ' Enregistrer l\'appli' }).click();
+  console.log('[FillTable] Clicking "Enregistrer l\'appli" button...');
+  await page.getByRole('button', { name: " Enregistrer l'appli" }).click();
 
   // Attendre la redirection
-  await page.waitForURL(/\/display\?v=|learningapps\.org\/\d+$/, { timeout: 15000 });
+  console.log('[FillTable] Waiting for redirection to display page...');
+  try {
+    await page.waitForURL(url => {
+      const isDisplay = url.href.includes('display?v=') || /\/\d+$/.test(url.pathname);
+      return isDisplay;
+    }, { timeout: 20000 });
+    console.log(`[FillTable] Success! Final URL: ${page.url()}`);
+  } catch (err) {
+    const currentUrl = page.url();
+    if (currentUrl.includes('display?v=') || /\/\d+$/.test(currentUrl)) {
+      console.log(`[FillTable] Already on display page: ${currentUrl}`);
+    } else {
+      console.error(`[FillTable] Save failed or redirection timeout. Current URL: ${currentUrl}`);
+      // On prend une capture d'écran en cas d'échec de redirection
+      await page.screenshot({ path: `/var/js/h5p/learningapps/debug_screenshots/filltable_save_error_${Date.now()}.png` });
+      throw new Error(`Redirection failed after save. Still on: ${currentUrl}`);
+    }
+  }
 }
 

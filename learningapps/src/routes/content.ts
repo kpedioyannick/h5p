@@ -10,6 +10,39 @@ const router = Router();
 const scenarioLoader = new ScenarioLoader();
 const scenarioExecutor = new ScenarioExecutor();
 
+const SARA_API_BASE_URL = 'https://sara.education';
+
+/**
+ * Envoie les métadonnées du module créé à sara.education (si subchapterSlug est fourni)
+ */
+async function notifySaraEducation(
+  subchapterSlug: string,
+  outputPath: string,
+  type: string,
+  metadata: Record<string, unknown>
+): Promise<void> {
+  const url = `${SARA_API_BASE_URL}/api/learnings-apps`;
+  const body = {
+    outputPath,
+    subchapterSlug,
+    type,
+    content: { metadata }
+  };
+
+  console.log(`[Sara] Calling ${url} for slug: ${subchapterSlug}`);
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json() as Record<string, unknown>;
+    console.log(`[Sara] Response (${res.status}):`, JSON.stringify(data));
+  } catch (err) {
+    console.error(`[Sara] Failed to notify sara.education:`, err instanceof Error ? err.message : err);
+  }
+}
+
 // Lazy-load AI client
 let aiClient: OpenAI | null = null;
 let aiProvider: 'openai' | 'deepseek' = 'openai';
@@ -45,10 +78,11 @@ function generateEmbedCode(iframeUrl: string): string {
 /**
  * POST /api/content/learningapps
  * Crée du contenu LearningApps via scénario enregistré
+ * Si le body contient `subchapterSlug`, notifie sara.education après la création.
  */
 router.post('/learningapps', async (req: Request, res: Response) => {
-  const body = req.body as CreateContentRequest;
-  const { module: moduleName, title, params } = body;
+  const body = req.body as CreateContentRequest & { subchapterSlug?: string; metadata?: Record<string, unknown> };
+  const { module: moduleName, title, params, subchapterSlug, metadata: extraMetadata } = body;
 
   if (!moduleName || !title) {
     const response: CreateContentResponse = {
@@ -85,16 +119,34 @@ router.post('/learningapps', async (req: Request, res: Response) => {
       return res.status(500).json(response);
     }
 
+    const displayUrl = `${process.env.LEARNINGAPPS_BASE_URL || 'https://learningapps.org'}/display?v=${result.appId}`;
     const response: CreateContentResponse = {
       success: true,
       moduleType: 'learningapps',
       module: moduleName,
       title,
-      iframeUrl: `${process.env.LEARNINGAPPS_BASE_URL || 'https://learningapps.org'}/display?v=${result.appId}`,
-      embedCode: generateEmbedCode(`${process.env.LEARNINGAPPS_BASE_URL || 'https://learningapps.org'}/display?v=${result.appId}`),
+      iframeUrl: displayUrl,
+      embedCode: generateEmbedCode(displayUrl),
       appId: result.appId
     };
 
+    // Si subchapterSlug est fourni, notifier sara.education avant de répondre
+    if (subchapterSlug) {
+      console.log(`[Sara] subchapterSlug detected: "${subchapterSlug}". Notifying sara.education...`);
+      // Fusionner les métadonnées de la réponse avec les métadonnées du body si fournies
+      const mergedMetadata = {
+        ...(response as unknown as Record<string, unknown>),
+        ...(extraMetadata || {})
+      };
+      await notifySaraEducation(
+        subchapterSlug,
+        displayUrl,
+        'learningapps',
+        mergedMetadata
+      );
+    }
+
+    console.log(`[API] Sending success response for ${moduleName}: ${result.appId}`);
     return res.json(response);
 
   } catch (error) {
@@ -213,6 +265,7 @@ router.post('/learningapps/ai', async (req: Request, res: Response) => {
       });
     }
 
+    console.log(`[API/AI] Sending success response for AI ${moduleName}: ${result.appId}`);
     return res.json({
       success: true,
       moduleType: 'learningapps',

@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { pathToFileURL } from 'url';
 import { ScenarioLoader } from './ScenarioLoader.js';
+import { LEARNINGAPPS_BASE_URL } from '../config/constants.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -72,25 +73,28 @@ export class ScenarioExecutor {
       }
 
       // Attendre un peu pour que la page se stabilise
+      console.log('[ScenarioExecutor] Waiting 2s for page stabilization...');
       await this.page.waitForTimeout(2000);
 
       // Récupérer l'URL résultante
       const resultUrl = this.page.url();
+      console.log(`[ScenarioExecutor] Final URL reached: ${resultUrl}`);
       
-      // Extraire l'ID de l'app si possible (pour LearningApps)
-      // L'URL peut être soit /display?v=... soit /{id}
+      // Extraire l'ID de l'app si possible
       let appId: string | undefined;
       const displayMatch = resultUrl.match(/[?&]v=([^&]+)/);
       const idMatch = resultUrl.match(/\/(\d+)$/);
       appId = displayMatch ? displayMatch[1] : (idMatch ? idMatch[1] : undefined);
+      
+      console.log(`[ScenarioExecutor] Extracted appId: ${appId || 'NONE'}`);
 
       // Construire l'URL d'iframe
       let iframeUrl = resultUrl;
       if (platform === 'learningapps' && appId) {
-        const { LEARNINGAPPS_BASE_URL } = await import('../config/constants.js');
         iframeUrl = `${LEARNINGAPPS_BASE_URL}watch?v=${appId}`;
       }
 
+      console.log('[ScenarioExecutor] Returning success result');
       return {
         success: true,
         iframeUrl,

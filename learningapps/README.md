@@ -411,3 +411,20 @@ Course de chevaux => OK
 Grille de correspondance => OK
 Compléter/remplir un tableau => OK
 Quiz avec saisie de texte pour la réponse => OK
+
+
+Base url : 
+https://sara.education/
+#[Route('/api/learnings-apps')]
+/**
+  * Enregistre un path (outputPath, domain learningspath) et un module (type, content) pour un sous-chapitre identifié par slug.
+  *
+  * Body (JSON) :
+  *   - outputPath (string) : lien  de sortie du path
+  *   - subchapterSlug (string) : slug du sous-chapitre
+  *   - type (string) : type (ex. type learningspath ou niveau)
+  *   - content (object) : contenu json du module
+      - metadata (object) : metadata de la response exemple : {"success":true,"moduleType":"learningapps","module":"FillTableingapps.org/display?v=p1zikw50k26","embedCode":"<iframe src=\"h
+  *
+  * Response 200/201 : { subchapterId, pathId, outputPath, moduleId }
+  */
