@@ -1,0 +1,323 @@
+{
+    "showCoverPage": false,
+    "bookCover": {
+        "coverDescription": "<p style=\"text-align: center;\"></p>",
+        "coverMedium": {
+            "params": {}
+        }
+    },
+    "chapters": [
+        {
+            "params": {
+                "content": [
+                    {
+                        "content": {
+                            "params": {
+                                "mode": "normal",
+                                "dialogs": [
+                                    {
+                                        "text": "<p style=\"text-align:center;\">dddddd</p>",
+                                        "answer": "<p style=\"text-align:center;\">dddddd</p>",
+                                        "tips": {}
+                                    }
+                                ],
+                                "behaviour": {
+                                    "enableRetry": true,
+                                    "disableBackwardsNavigation": false,
+                                    "scaleTextNotCard": false,
+                                    "randomCards": false,
+                                    "maxProficiency": 5,
+                                    "quickProgression": false
+                                },
+                                "answer": "Retourner",
+                                "next": "Suivant",
+                                "prev": "Précédent",
+                                "retry": "Recommencer",
+                                "correctAnswer": "J&#039;ai eu bon!",
+                                "incorrectAnswer": "J&#039;ai eu faux",
+                                "round": "Round @round",
+                                "cardsLeft": "Cartes restantes: @number",
+                                "nextRound": "Procéder au round @round",
+                                "startOver": "Recommencer",
+                                "showSummary": "Suivant",
+                                "summary": "Résumé",
+                                "summaryCardsRight": "Cartes correctes:",
+                                "summaryCardsWrong": "Cartes incorrectes:",
+                                "summaryCardsNotShown": "Cartes non montrées:",
+                                "summaryOverallScore": "Score global",
+                                "summaryCardsCompleted": "Cartes que vous avez complétées:",
+                                "summaryCompletedRounds": "Rounds complétés:",
+                                "summaryAllDone": "Bien joué! Vous avez réussi à avoir les @cards cartes correctes @max fois de suite!",
+                                "progressText": "Carte @card sur @total",
+                                "cardFrontLabel": "Le devant de la carte",
+                                "cardBackLabel": "Le dos de la carte",
+                                "tipButtonLabel": "Montrer l&#039;indice",
+                                "audioNotSupported": "Votre navigateur ne supporte pas ce fichier audio",
+                                "confirmStartingOver": {
+                                    "header": "Recommencer?",
+                                    "body": "Toutes les progressions seront perdues. Êtes-vous sûr de vouloir recommencer?",
+                                    "cancelLabel": "Annuler",
+                                    "confirmLabel": "Recommencer"
+                                },
+                                "title": "",
+                                "description": "<p>dddd</p>"
+                            },
+                            "library": "H5P.Dialogcards 1.9",
+                            "metadata": {
+                                "contentType": "Dialog Cards",
+                                "license": "U",
+                                "title": "Sans titre Dialog Cards",
+                                "authors": [],
+                                "changes": [],
+                                "extraTitle": "Sans titre Dialog Cards"
+                            },
+                            "subContentId": "5627cd5d-49b3-455f-8bed-e828e9ad3908"
+                        },
+                        "useSeparator": "auto"
+                    },
+                    {
+                        "content": {
+                            "params": {
+                                "media": {
+                                    "type": {
+                                        "params": {}
+                                    },
+                                    "disableImageZooming": false
+                                },
+                                "solution": {
+                                    "sample": "<div>SansSansSans</div>",
+                                    "introduction": "<div>You can optionally leave the students some explanations about your example. The explanation will only show up if you add an example, too.</div>"
+                                },
+                                "keywords": [
+                                    {
+                                        "options": {
+                                            "points": 1,
+                                            "occurrences": 1,
+                                            "caseSensitive": true,
+                                            "forgiveMistakes": false,
+                                            "feedbackIncludedWord": "keyword",
+                                            "feedbackMissedWord": "none"
+                                        },
+                                        "keyword": "Keyword"
+                                    }
+                                ],
+                                "overallFeedback": [
+                                    {
+                                        "from": 0,
+                                        "to": 100
+                                    }
+                                ],
+                                "behaviour": {
+                                    "inputFieldSize": "10",
+                                    "enableRetry": true,
+                                    "ignoreScoring": false,
+                                    "pointsHost": 1,
+                                    "linebreakReplacement": " "
+                                },
+                                "checkAnswer": "Vérifier",
+                                "submitAnswer": "Submit",
+                                "tryAgain": "Recommencer",
+                                "showSolution": "Montrer la solution",
+                                "feedbackHeader": "Feedback",
+                                "solutionTitle": "Exemple de solution",
+                                "remainingChars": "Il reste : @chars",
+                                "notEnoughChars": "Il faudrait introduire au moins @chars caractères !",
+                                "messageSave": "texte sauvegardé",
+                                "ariaYourResult": "You got @score out of @total points",
+                                "ariaNavigatedToSolution": "Navigated to newly included sample solution after textarea.",
+                                "ariaCheck": "Check the answers.",
+                                "ariaShowSolution": "Show the solution. You will be provided with a sample solution.",
+                                "ariaRetry": "Retry the task. You can improve your previous answer if the author allowed that.",
+                                "placeholderText": "SansSansSansSans",
+                                "taskDescription": "<p>SansSansSans</p>"
+                            },
+                            "library": "H5P.Essay 1.5",
+                            "metadata": {
+                                "contentType": "Essay",
+                                "license": "U",
+                                "title": "titre Essay",
+                                "authors": [],
+                                "changes": [],
+                                "extraTitle": "titre Essay"
+                            },
+                            "subContentId": "28ba3c43-4f0c-457c-89ad-9f4ea0b256f5"
+                        },
+                        "useSeparator": "auto"
+                    }
+                ]
+            },
+            "library": "H5P.Column 1.18",
+            "subContentId": "7635244a-8db7-439f-a099-6293ba9aba23",
+            "metadata": {
+                "contentType": "Column",
+                "license": "U",
+                "title": "Column 1",
+                "authors": [],
+                "changes": [],
+                "extraTitle": "Column 1"
+            }
+        },
+        {
+            "params": {
+                "content": [
+                    {
+                        "content": {
+                            "params": {
+                                "media": {
+                                    "type": {
+                                        "params": {}
+                                    },
+                                    "disableImageZooming": false
+                                },
+                                "answers": [
+                                    {
+                                        "correct": true,
+                                        "tipsAndFeedback": {
+                                            "tip": "",
+                                            "chosenFeedback": "",
+                                            "notChosenFeedback": ""
+                                        },
+                                        "text": "<div>&nbsp;Multiple Choice</div>"
+                                    },
+                                    {
+                                        "correct": false,
+                                        "tipsAndFeedback": {
+                                            "tip": "",
+                                            "chosenFeedback": "",
+                                            "notChosenFeedback": ""
+                                        },
+                                        "text": "<div>&nbsp;Multiple Choice 2</div>"
+                                    },
+                                    {
+                                        "correct": false,
+                                        "tipsAndFeedback": {
+                                            "tip": "",
+                                            "chosenFeedback": "",
+                                            "notChosenFeedback": ""
+                                        },
+                                        "text": "<div>&nbsp;Multiple Choice 3</div>"
+                                    }
+                                ],
+                                "overallFeedback": [
+                                    {
+                                        "from": 0,
+                                        "to": 100
+                                    }
+                                ],
+                                "behaviour": {
+                                    "enableRetry": true,
+                                    "enableSolutionsButton": true,
+                                    "enableCheckButton": true,
+                                    "type": "auto",
+                                    "singlePoint": false,
+                                    "randomAnswers": true,
+                                    "showSolutionsRequiresInput": true,
+                                    "confirmCheckDialog": false,
+                                    "confirmRetryDialog": false,
+                                    "autoCheck": false,
+                                    "passPercentage": 100,
+                                    "showScorePoints": true
+                                },
+                                "UI": {
+                                    "checkAnswerButton": "Vérifier",
+                                    "submitAnswerButton": "Envoyer",
+                                    "showSolutionButton": "Afficher la solution",
+                                    "tryAgainButton": "Recommencer",
+                                    "tipsLabel": "Afficher les indices",
+                                    "scoreBarLabel": "You got :num out of :total points",
+                                    "tipAvailable": "Indice disponible",
+                                    "feedbackAvailable": "Retour disponible",
+                                    "readFeedback": "Lire le commentaire",
+                                    "wrongAnswer": "Mauvaise réponse",
+                                    "correctAnswer": "Bonne réponse",
+                                    "shouldCheck": "Il fallait cocher ici",
+                                    "shouldNotCheck": "Il ne fallait pas cocher ici !",
+                                    "noInput": "Veuillez répondre avant de consulter la solution",
+                                    "a11yCheck": "Vérifiez les réponses. Les réponses seront marquées comme correctes, incorrectes ou sans réponse.",
+                                    "a11yShowSolution": "Montrez la solution. La tâche sera marquée avec sa solution correcte.",
+                                    "a11yRetry": "Réessayer la tâche. Réinitialiser toutes les réponses et recommencer la tâche."
+                                },
+                                "confirmCheck": {
+                                    "header": "Terminer ?",
+                                    "body": "Êtes-vous certain de vouloir terminer ?",
+                                    "cancelLabel": "Annuler",
+                                    "confirmLabel": "Terminer"
+                                },
+                                "confirmRetry": {
+                                    "header": "Recommencer ?",
+                                    "body": "Êtes-vous certain de vouloir recommencer ?",
+                                    "cancelLabel": "Annuler",
+                                    "confirmLabel": "Confirmer"
+                                },
+                                "question": "<p>&nbsp;Multiple Choice</p>"
+                            },
+                            "library": "H5P.MultiChoice 1.16",
+                            "metadata": {
+                                "contentType": "Multiple Choice",
+                                "license": "U",
+                                "title": "Multiple Choice",
+                                "authors": [],
+                                "changes": [],
+                                "extraTitle": "Multiple Choice"
+                            },
+                            "subContentId": "469a1a8d-9c89-45ae-8219-4d4c0e01d0b5"
+                        },
+                        "useSeparator": "auto"
+                    }
+                ]
+            },
+            "library": "H5P.Column 1.18",
+            "subContentId": "676e47ae-831c-499d-bcbf-82b99e6ea653",
+            "metadata": {
+                "contentType": "Column",
+                "license": "U",
+                "title": "Column 2",
+                "authors": [],
+                "changes": [],
+                "extraTitle": "Column 2"
+            }
+        }
+    ],
+    "behaviour": {
+        "baseColor": "#c45b17",
+        "defaultTableOfContents": true,
+        "progressIndicators": true,
+        "progressAuto": true,
+        "displaySummary": true,
+        "enableRetry": true
+    },
+    "read": "Lire",
+    "displayTOC": "Afficher la &#039;Table des matières&#039;",
+    "hideTOC": "Cacher la &#039;Table des matières&#039;",
+    "nextPage": "Page suivante",
+    "previousPage": "Page précédente",
+    "chapterCompleted": "Page terminée!",
+    "partCompleted": "@pages sur @total terminé",
+    "incompleteChapter": "Page non terminée",
+    "navigateToTop": "Revenir en haut",
+    "markAsFinished": "J&#039;ai terminé cette page",
+    "fullscreen": "Plein écran",
+    "exitFullscreen": "Réduire",
+    "bookProgressSubtext": "@count sur @total pages",
+    "interactionsProgressSubtext": "@count sur @total interactions",
+    "submitReport": "Soumettre le rapport",
+    "restartLabel": "Relancer",
+    "summaryHeader": "Sommaire",
+    "allInteractions": "Toutes les interactions",
+    "unansweredInteractions": "Interactions sans réponse",
+    "scoreText": "@score / @maxscore",
+    "leftOutOfTotalCompleted": "@left sur @max interactions réalisées",
+    "noInteractions": "Aucune interaction",
+    "score": "Score",
+    "summaryAndSubmit": "Résumé et transmission",
+    "noChapterInteractionBoldText": "Vous n&#039;avez interagi avec aucune page.",
+    "noChapterInteractionText": "Vous devez interagir avec au moins une page avant de pouvoir voir le résumé.",
+    "yourAnswersAreSubmittedForReview": "Vos réponses sont soumises à examen !",
+    "bookProgress": "Avancement dans la lecture",
+    "interactionsProgress": "Avancement des interactions",
+    "totalScoreLabel": "Score total",
+    "a11y": {
+        "progress": "Page @page sur @total.",
+        "menu": "Étendre/Réduire le menu"
+    }
+}

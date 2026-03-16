@@ -18,16 +18,21 @@ import { initLearningAppsSession } from '../../services/learningapps/helpers.js'
 export default async function createImagePlacement(page: Page, params: ScenarioParams) {
   await initLearningAppsSession(page);
 
-  await page.locator('div').filter({ hasText: 'Placement sur images' }).nth(5).click();
-  
-  // Gérer le clic sur 'i' si nécessaire (fermer une popup ou changer de vue)
-  try {
-    await page.locator('i').nth(5).click({ timeout: 2000 });
-  } catch {
-    // Ignorer si l'élément n'existe pas
-  }
+  // Navigation directe pour éviter les problèmes de UI
+  const learningAppsUrl = process.env.LEARNINGAPPS_BASE_URL || 'https://learningapps.org';
+  await page.goto(`${learningAppsUrl}/create?new=83`);
 
-  await page.getByRole('link', { name: ' Créer une nouvelle appli' }).click();
+  // Wait for the "Create new App" template page IF we are redirected there, OR check if we are directly in editor?
+  // Usually /create?new=83 opens the editor directly?
+  // Let's check if we see the Title input.
+  try {
+    await page.locator('#LearningApp_title').waitFor({ state: 'visible', timeout: 5000 });
+  } catch {
+    // If title not visible, maybe we are on the "Examples" page (Template page)
+    // Then we need to click "Create new App"
+    console.log('DEBUG: Title not found immediately, looking for Create App button...');
+    await page.getByRole('link', { name: ' Créer une nouvelle appli' }).click();
+  }
 
   await page.locator('#LearningApp_title').fill(params.title as string);
 
@@ -39,8 +44,9 @@ export default async function createImagePlacement(page: Page, params: ScenarioP
   // Ce module nécessite une interaction plus complexe avec l'interface de placement
   console.log('ImagePlacement module - Implementation à compléter avec upload d\'image et placement interactif');
 
+  // Note: La navigation et l'upload de base ont été explorés mais l'implémentation complète des placements reste à faire.
+
   await page.getByRole('button', { name: '  Afficher un aperçu' }).click();
   await page.getByRole('button', { name: ' Enregistrer l\'appli' }).click();
   await page.waitForURL(/\/display\?v=|learningapps\.org\/\d+$/, { timeout: 15000 });
 }
-

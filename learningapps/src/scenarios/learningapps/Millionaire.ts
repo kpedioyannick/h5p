@@ -1,6 +1,6 @@
 import { Page } from 'playwright';
 import { ScenarioParams } from '../../types/index.js';
-import { initLearningAppsSession, setContentElement } from '../../services/learningapps/helpers.js';
+import { initLearningAppsSession, setSuccessMessage } from '../../services/learningapps/helpers.js';
 
 /**
  * Scénario pour créer un "Jeu du millionnaire" sur LearningApps
@@ -57,6 +57,9 @@ export default async function createMillionaire(page: Page, params: ScenarioPara
       }
     }
   }
+
+  // Remplir le message de succès
+  await setSuccessMessage(page, params.successMessage as string);
 
   await page.getByRole('button', { name: '  Afficher un aperçu' }).click();
   const previewFrame = page.locator('iframe').contentFrame();

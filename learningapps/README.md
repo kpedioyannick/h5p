@@ -184,6 +184,32 @@ curl -X POST http://localhost:3000/api/content/learningapps \
   }'
 ```
 
+## 🔄 Ré-enregistrer un module existant
+
+Si un module ne fonctionne pas correctement, vous pouvez le ré-enregistrer avec Playwright Codegen.
+
+### Méthode rapide
+
+```bash
+# Lancer Playwright Codegen
+npm run codegen:learningapps
+
+# Ou utiliser le script interactif
+node record_all_modules.js
+```
+
+### Étapes détaillées
+
+1. **Lancer Playwright Codegen** : `npm run codegen:learningapps`
+2. **Se connecter** à LearningApps dans le navigateur ouvert
+3. **Créer l'activité manuellement** pour le module concerné
+4. **Copier le code** généré depuis Playwright Inspector
+5. **Sauvegarder** dans `src/scenarios/learningapps/[NomModule].ts`
+6. **Adapter le code** pour utiliser les paramètres (voir section ci-dessous)
+7. **Tester** avec l'API
+
+📚 **Voir** : `RECORDING_GUIDE.md` pour un guide complet et `RECORDING_CHECKLIST.md` pour suivre la progression.
+
 ## 🛠️ Créer un nouveau module LearningApps
 
 ### Workflow de création

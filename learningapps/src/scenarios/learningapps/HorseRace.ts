@@ -1,6 +1,6 @@
 import { Page } from 'playwright';
 import { ScenarioParams } from '../../types/index.js';
-import { initLearningAppsSession, setContentElement } from '../../services/learningapps/helpers.js';
+import { initLearningAppsSession, setContentElement, setSuccessMessage } from '../../services/learningapps/helpers.js';
 
 /**
  * Scénario pour créer un "Course de chevaux" sur LearningApps
@@ -133,6 +133,13 @@ export default async function createHorseRace(page: Page, params: ScenarioParams
   if (params.help) {
     await page.locator('#LearningApp_help').fill(params.help as string);
   }
+
+  if (params.help) {
+    await page.locator('#LearningApp_help').fill(params.help as string);
+  }
+
+  // Remplir le message de succès
+  await setSuccessMessage(page, params.successMessage as string);
 
   // Afficher un aperçu (optionnel)
   if (params.preview !== false) {
