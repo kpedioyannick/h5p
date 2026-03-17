@@ -19,11 +19,10 @@ console.log('📁 .env path:', path.resolve(__dirname, '../../.env'));
 import express from 'express';
 import contentRoutes from './routes/content.js';
 import modulesRoutes from './routes/modules.js';
-import h5pRoutes from './routes/h5p.js';
 import planningRoutes from './routes/planning.js';
 
 const app = express();
-const PORT = process.env.LEARNINGAPPS_PORT || process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(express.json());
@@ -39,7 +38,6 @@ app.use((req, res, next) => {
 // Routes
 app.use('/api/content', contentRoutes);
 app.use('/api/modules', modulesRoutes);
-app.use('/api/h5p', h5pRoutes);
 app.use('/api/planning', planningRoutes);
 
 // Route /view/:slug/:id removed (handled by external h5p server)
@@ -134,7 +132,7 @@ app.listen(PORT, () => {
 ║   🎬 Workflow:                                                ║
 ║   LearningApps: Scénarios Playwright                          ║
 ║                                                              ║
-║   🖥️  Browser mode: HEADLESS                                 ║
+║   🖥️  Browser mode: HEADED (visible)                         ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
   `);

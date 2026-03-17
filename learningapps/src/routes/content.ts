@@ -10,61 +10,16 @@ const router = Router();
 const scenarioLoader = new ScenarioLoader();
 const scenarioExecutor = new ScenarioExecutor();
 
-const SARA_API_BASE_URL = 'https://sara.education';
-
-/**
- * Envoie les métadonnées du module créé à sara.education (si subchapterSlug est fourni)
- */
-async function notifySaraEducation(
-  subchapterSlug: string,
-  outputPath: string,
-  type: string,
-  metadata: Record<string, unknown>
-): Promise<void> {
-  const url = `${SARA_API_BASE_URL}/api/learnings-apps`;
-  const body = {
-    outputPath,
-    subchapterSlug,
-    type,
-    content: { metadata }
-  };
-
-  console.log(`[Sara] Calling ${url} for slug: ${subchapterSlug}`);
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+// Lazy-load OpenAI client to ensure environment variables are loaded first
+let openai: OpenAI | null = null;
+function getOpenAI(): OpenAI | null {
+  if (openai === null && process.env.OPENAI_API_KEY) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
     });
-    const data = await res.json() as Record<string, unknown>;
-    console.log(`[Sara] Response (${res.status}):`, JSON.stringify(data));
-  } catch (err) {
-    console.error(`[Sara] Failed to notify sara.education:`, err instanceof Error ? err.message : err);
+    console.log('✅ OpenAI client initialized for LearningApps routes');
   }
-}
-
-// Lazy-load AI client
-let aiClient: OpenAI | null = null;
-let aiProvider: 'openai' | 'deepseek' = 'openai';
-
-function getAIClient(): OpenAI | null {
-  if (aiClient === null) {
-    if (process.env.DEEPSEEK_API_KEY) {
-      aiClient = new OpenAI({
-        apiKey: process.env.DEEPSEEK_API_KEY,
-        baseURL: process.env.DEEPSEEK_BASE_URL || 'https://api.deepseek.com',
-      });
-      aiProvider = 'deepseek';
-      console.log('✅ DeepSeek client initialized for LearningApps routes');
-    } else if (process.env.OPENAI_API_KEY) {
-      aiClient = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-      });
-      aiProvider = 'openai';
-      console.log('✅ OpenAI client initialized for LearningApps routes');
-    }
-  }
-  return aiClient;
+  return openai;
 }
 
 /**
@@ -78,11 +33,10 @@ function generateEmbedCode(iframeUrl: string): string {
 /**
  * POST /api/content/learningapps
  * Crée du contenu LearningApps via scénario enregistré
- * Si le body contient `subchapterSlug`, notifie sara.education après la création.
  */
 router.post('/learningapps', async (req: Request, res: Response) => {
-  const body = req.body as CreateContentRequest & { subchapterSlug?: string; metadata?: Record<string, unknown> };
-  const { module: moduleName, title, params, subchapterSlug, metadata: extraMetadata } = body;
+  const body = req.body as CreateContentRequest;
+  const { module: moduleName, title, params } = body;
 
   if (!moduleName || !title) {
     const response: CreateContentResponse = {
@@ -119,34 +73,16 @@ router.post('/learningapps', async (req: Request, res: Response) => {
       return res.status(500).json(response);
     }
 
-    const displayUrl = `${process.env.LEARNINGAPPS_BASE_URL || 'https://learningapps.org'}/display?v=${result.appId}`;
     const response: CreateContentResponse = {
       success: true,
       moduleType: 'learningapps',
       module: moduleName,
       title,
-      iframeUrl: displayUrl,
-      embedCode: generateEmbedCode(displayUrl),
+      iframeUrl: `${process.env.LEARNINGAPPS_BASE_URL || 'https://learningapps.org'}/display?v=${result.appId}`,
+      embedCode: generateEmbedCode(`${process.env.LEARNINGAPPS_BASE_URL || 'https://learningapps.org'}/display?v=${result.appId}`),
       appId: result.appId
     };
 
-    // Si subchapterSlug est fourni, notifier sara.education avant de répondre
-    if (subchapterSlug) {
-      console.log(`[Sara] subchapterSlug detected: "${subchapterSlug}". Notifying sara.education...`);
-      // Fusionner les métadonnées de la réponse avec les métadonnées du body si fournies
-      const mergedMetadata = {
-        ...(response as unknown as Record<string, unknown>),
-        ...(extraMetadata || {})
-      };
-      await notifySaraEducation(
-        subchapterSlug,
-        displayUrl,
-        'learningapps',
-        mergedMetadata
-      );
-    }
-
-    console.log(`[API] Sending success response for ${moduleName}: ${result.appId}`);
     return res.json(response);
 
   } catch (error) {
@@ -171,9 +107,9 @@ router.post('/learningapps/ai', async (req: Request, res: Response) => {
   try {
     console.log('Received LearningApps AI generation request');
 
-    const aiClient = getAIClient();
-    if (!aiClient) {
-      return res.status(500).json({ error: 'AI API key (OpenAI or DeepSeek) not configured on server.' });
+    const openaiClient = getOpenAI();
+    if (!openaiClient) {
+      return res.status(500).json({ error: 'OpenAI API key not configured on server.' });
     }
 
     const { module: moduleName, topic, count = 5 } = req.body;
@@ -191,9 +127,16 @@ router.post('/learningapps/ai', async (req: Request, res: Response) => {
     Generate a JSON object for LearningApps scenario parameters for the module "${moduleName}".
     The content should be about "${topic}".
     
-    The output must be ONLY valid JSON matching the structure required by the scenario.
+    The output must be ONLY a JSON object with a 'results' key containing an array of ${count} activity parameter objects.
+    Each object must match the structure required by the scenario.
     Do not include markdown formatting or explanations.
     
+    For ALL modules, you can optionally include:
+    "successMessage": "Message de félicitations (ex: Bravo !)"
+    "help": "Indice général (ex: Utilise tes doigts)"
+
+    Specific schemas:
+
     For "Qcm":
     {
       "title": "Title in French",
@@ -225,24 +168,119 @@ router.post('/learningapps/ai', async (req: Request, res: Response) => {
       "title": "Title in French",
       "task": "Task description in French",
       "levels": [
+        // MUST generate exactly 6 levels (increasing difficulty)
         {
-          "question": { "text": "Question Level 1", "type": "text" },
+          "question": { "text": "Question Level 1 (Easy)", "type": "text" },
           "answers": ["Correct", "Wrong", "Wrong", "Wrong"]
-        }
+        },
+        ... (exactly 6 levels total)
       ]
+    }
+    // The 'levels' array MUST contain exactly 6 objects.
+
+    For "GrilleCorrespondance":
+    {
+      "title": "Titre",
+      "task": "Consigne",
+      "rows": [
+        [
+          { "type": "text", "text": "Élément 1" },
+          { "type": "text", "text": "Correspondance 1" }
+        ],
+        [
+          { "type": "text", "text": "Élément 2" },
+          { "type": "text", "text": "Correspondance 2" }
+        ]
+      ]
+    }
+
+    For "HorseRace":
+    {
+      "title": "Titre",
+      "task": "Consigne",
+      "questions": [
+        // MUST generate at least 5 questions for this module to be playable
+        {
+          "question": "Question texte",
+          "answers": [
+            { "content": { "text": "Réponse correcte", "type": "text" }, "is_correct": true },
+            { "content": { "text": "Réponse incorrecte", "type": "text" }, "is_correct": false }
+          ]
+        },
+        ... (at least 5 questions total)
+      ]
+    }
+
+    For "Grouping":
+    {
+      "title": "Titre",
+      "task": "Consigne",
+      "clusters": [
+        { "name": "Groupe 1", "items": ["Item A", "Item B"] },
+        { "name": "Groupe 2", "items": ["Item C"] }
+      ]
+    }
+    
+    For "Ordering":
+    {
+      "title": "Titre",
+      "task": "Consigne",
+      "items": [
+        { "text": "Étape 1" },
+        { "text": "Étape 2" },
+        { "text": "Étape 3" }
+      ]
+    }
+
+    For "Pairmatching":
+    {
+      "title": "Titre",
+      "task": "Consigne",
+      "pairs": [
+        { "v1": { "text": "A" }, "v2": { "text": "B" } },
+        { "v1": { "text": "C" }, "v2": { "text": "D" } }
+      ]
+    }
+
+    For "Hangman":
+    {
+      "title": "Titre",
+      "task": "Consigne",
+      "words": [
+        { "word": "BANANE", "hint": { "text": "Fruit jaune" } },
+        { "word": "AVION", "hint": { "text": "Vole dans le ciel" } }
+      ]
+    }
+    
+    For "WriteAnswerCards":
+    {
+      "title": "Titre",
+      "task": "Consigne",
+      "cards": [
+        { "question": "Capitale France ?", "solution": "Paris" },
+        { "question": "2 + 2 ?", "solution": "4" }
+      ]
+    }
+
+    For "FillTable":
+    {
+      "title": "Titre",
+      "task": "Consigne",
+      "table": {
+        "rows": [
+          { "cells": ["En-tête 1", "En-tête 2"] },
+          { "cells": ["Donnée 1", "Donnée 2"] }
+        ]
+      }
     }
 
     Ensure all text is in French.
     Generate appropriate content for the requested module.
     `;
 
-    const model = aiProvider === 'deepseek' 
-      ? (process.env.DEEPSEEK_MODEL || 'deepseek-chat') 
-      : 'gpt-4o-mini';
-
-    const completion = await aiClient.chat.completions.create({
+    const completion = await openaiClient.chat.completions.create({
       messages: [{ role: "user", content: prompt }],
-      model: model,
+      model: "gpt-4o-mini",
       response_format: { type: "json_object" },
     });
 
@@ -251,30 +289,45 @@ router.post('/learningapps/ai', async (req: Request, res: Response) => {
       throw new Error('No content received from OpenAI');
     }
 
-    const params = JSON.parse(content);
-    console.log('AI generated params:', JSON.stringify(params, null, 2));
+    const aiData = JSON.parse(completion.choices[0].message.content || '{}');
+    let activityParamsList = [];
 
-    // Exécuter le scénario avec les paramètres générés
-    const result = await scenarioExecutor.executeScenario('learningapps', moduleName, params);
-
-    if (!result.success) {
-      return res.status(500).json({
-        success: false,
-        error: 'Content creation failed',
-        details: result.error
-      });
+    if (aiData.results && Array.isArray(aiData.results)) {
+      activityParamsList = aiData.results;
+    } else {
+      activityParamsList = [aiData];
     }
 
-    console.log(`[API/AI] Sending success response for AI ${moduleName}: ${result.appId}`);
+    console.log(`AI generated ${activityParamsList.length} items for ${moduleName}`);
+
+    const finalResults = [];
+    for (const [index, params] of activityParamsList.entries()) {
+      console.log(`Executing scenario for item ${index + 1}/${activityParamsList.length}`);
+      try {
+        const result = await scenarioExecutor.executeScenario('learningapps', moduleName, params);
+        if (result.success) {
+          finalResults.push({
+            success: true,
+            moduleType: 'learningapps',
+            module: moduleName,
+            title: params.title || topic,
+            iframeUrl: result.iframeUrl,
+            embedCode: result.iframeUrl ? generateEmbedCode(result.iframeUrl) : undefined,
+            appId: result.appId,
+            aiParams: params
+          });
+        } else {
+          finalResults.push({ success: false, error: result.error, params });
+        }
+      } catch (err) {
+        finalResults.push({ success: false, error: String(err), params });
+      }
+    }
+
     return res.json({
       success: true,
-      moduleType: 'learningapps',
-      module: moduleName,
-      title: params.title,
-      iframeUrl: result.iframeUrl,
-      embedCode: result.iframeUrl ? generateEmbedCode(result.iframeUrl) : undefined,
-      appId: result.appId,
-      aiParams: params
+      count: finalResults.length,
+      results: finalResults
     });
 
   } catch (error) {
